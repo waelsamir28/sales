@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   attendance,
   cashTransactions,
@@ -19,6 +19,9 @@ import {
   warehouseTransfers,
   warehouses,
 } from "@/db/schema";
+
+const SEED_LOCK_KEY = 0x53414c45;
+type SeedExecutor = Pick<typeof db, "select" | "insert" | "update">;
 
 export const DEFAULT_SETTINGS: Record<string, string> = {
   store_name: "مكتبة النور",
@@ -124,178 +127,185 @@ const ITEMS: SeedItem[] = [
 ];
 
 export async function ensureSeeded() {
-  const existing = await db.select({ id: categories.id }).from(categories).limit(1);
-  if (existing.length > 0) {
-    await ensureSettings();
-    await ensureInstallments();
-    await ensureUsers();
-    await markBooksSaleOnly();
-    return false;
-  }
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(${SEED_LOCK_KEY}, 1)`);
+    await tx.execute(
+      sql`ALTER TABLE "categories" ADD COLUMN IF NOT EXISTS "color" varchar(20) NOT NULL DEFAULT '#3b82f6'`,
+    );
 
-  const insertedCats = await db.insert(categories).values(CATEGORIES).returning();
-  const catByName = new Map(insertedCats.map((c) => [c.name, c.id]));
+    const existing = await tx.select({ id: categories.id }).from(categories).limit(1);
+    if (existing.length > 0) {
+      await ensureSettings(tx);
+      await ensureInstallments(tx);
+      await ensureUsers(tx);
+      await markBooksSaleOnly(tx);
+      return false;
+    }
 
-  await db.insert(warehouses).values([
-    { name: "المخزن الرئيسي", isDefault: true },
-    { name: "فرع المعرض", isDefault: false },
-  ]);
+    const insertedCats = await tx.insert(categories).values(CATEGORIES).returning();
+    const catByName = new Map(insertedCats.map((c) => [c.name, c.id]));
 
-  await db.insert(treasuries).values([
-    { name: "كاشير 1", balance: "2681.85", isDefault: true },
-    { name: "خزينة الإدارة", balance: "15400.00", isDefault: false },
-  ]);
+    await tx.insert(warehouses).values([
+      { name: "المخزن الرئيسي", isDefault: true },
+      { name: "فرع المعرض", isDefault: false },
+    ]);
 
-  await db.insert(items).values(
-    ITEMS.map((item) => ({
-      code: item.code,
-      barcode: item.barcode,
-      name: item.name,
-      categoryId: catByName.get(item.category) ?? insertedCats[0].id,
-      unit: item.unit,
-      price: item.price,
-      cost: item.cost,
-      taxPercent: "0",
-      stock: item.stock,
-      minStock: "5",
-      active: true,
-      saleOnly: item.category === "كتب خارجية",
-    })),
-  );
+    await tx.insert(treasuries).values([
+      { name: "كاشير 1", balance: "2681.85", isDefault: true },
+      { name: "خزينة الإدارة", balance: "15400.00", isDefault: false },
+    ]);
 
-  await db.insert(customers).values([
-    { code: "C001", name: "نقدي / عميل يومي", phone: "", address: "", discountPercent: "0", balance: "0" },
-    { code: "C002", name: "مدرسة النور الخاصة", phone: "01011112222", address: "مدينة نصر", discountPercent: "5", balance: "450.00" },
-    { code: "C003", name: "أحمد محمد علي", phone: "01098765432", address: "مصر الجديدة", discountPercent: "0", balance: "120.00" },
-    { code: "C004", name: "مكتبة الصفوة", phone: "01234567890", address: "العباسية", discountPercent: "3", balance: "0" },
-    { code: "C005", name: "حضانة البراعم", phone: "01122334455", address: "مدينة نصر", discountPercent: "7", balance: "80.00" },
-    { code: "C006", name: "فاطمة حسن", phone: "01055667788", address: "الزيتون", discountPercent: "0", balance: "0" },
-    { code: "C007", name: "شركة الأمل للتوريدات", phone: "0223456789", address: "القاهرة", discountPercent: "10", balance: "900.00" },
-    { code: "C008", name: "مدرس محمد عبد الرحمن", phone: "01033445566", address: "حدائق القبة", discountPercent: "0", balance: "35.00" },
-  ]);
+    await tx.insert(items).values(
+      ITEMS.map((item) => ({
+        code: item.code,
+        barcode: item.barcode,
+        name: item.name,
+        categoryId: catByName.get(item.category) ?? insertedCats[0].id,
+        unit: item.unit,
+        price: item.price,
+        cost: item.cost,
+        taxPercent: "0",
+        stock: item.stock,
+        minStock: "5",
+        active: true,
+        saleOnly: item.category === "كتب خارجية",
+      })),
+    );
 
-  await db.insert(suppliers).values([
-    { code: "S001", name: "جملة القرطاسية المصرية", phone: "0225551111", address: "العباسية", balance: "3200.00" },
-    { code: "S002", name: "مكتب النيل للتوريدات", phone: "0226662222", address: "شبرا", balance: "1500.00" },
-    { code: "S003", name: "دار نشر المعاصر", phone: "0227773333", address: "الدقي", balance: "800.00" },
-    { code: "S004", name: "شركة الورق الحديث", phone: "0228884444", address: "6 أكتوبر", balance: "0" },
-    { code: "S005", name: "توكيلات الأدوات الهندسية", phone: "01020003000", address: "وسط البلد", balance: "420.00" },
-  ]);
+    await tx.insert(customers).values([
+      { code: "C001", name: "نقدي / عميل يومي", phone: "", address: "", discountPercent: "0", balance: "0" },
+      { code: "C002", name: "مدرسة النور الخاصة", phone: "01011112222", address: "مدينة نصر", discountPercent: "5", balance: "450.00" },
+      { code: "C003", name: "أحمد محمد علي", phone: "01098765432", address: "مصر الجديدة", discountPercent: "0", balance: "120.00" },
+      { code: "C004", name: "مكتبة الصفوة", phone: "01234567890", address: "العباسية", discountPercent: "3", balance: "0" },
+      { code: "C005", name: "حضانة البراعم", phone: "01122334455", address: "مدينة نصر", discountPercent: "7", balance: "80.00" },
+      { code: "C006", name: "فاطمة حسن", phone: "01055667788", address: "الزيتون", discountPercent: "0", balance: "0" },
+      { code: "C007", name: "شركة الأمل للتوريدات", phone: "0223456789", address: "القاهرة", discountPercent: "10", balance: "900.00" },
+      { code: "C008", name: "مدرس محمد عبد الرحمن", phone: "01033445566", address: "حدائق القبة", discountPercent: "0", balance: "35.00" },
+    ]);
 
-  await db.insert(employees).values([
-    { name: "admin", phone: "01000000000", jobTitle: "مدير النظام", salary: "12000", hireDate: "2022-01-01", active: true },
-    { name: "سارة محمود", phone: "01011110001", jobTitle: "كاشير", salary: "4500", hireDate: "2023-09-01", active: true },
-    { name: "محمود حسن", phone: "01011110002", jobTitle: "محاسب", salary: "7000", hireDate: "2022-06-15", active: true },
-    { name: "حسام علي", phone: "01011110003", jobTitle: "أمين مخزن", salary: "5000", hireDate: "2023-02-10", active: true },
-    { name: "نورا إبراهيم", phone: "01011110004", jobTitle: "بائع", salary: "4200", hireDate: "2024-01-20", active: true },
-    { name: "خالد يوسف", phone: "01011110005", jobTitle: "مندوب مشتريات", salary: "5500", hireDate: "2023-11-01", active: true },
-  ]);
+    await tx.insert(suppliers).values([
+      { code: "S001", name: "جملة القرطاسية المصرية", phone: "0225551111", address: "العباسية", balance: "3200.00" },
+      { code: "S002", name: "مكتب النيل للتوريدات", phone: "0226662222", address: "شبرا", balance: "1500.00" },
+      { code: "S003", name: "دار نشر المعاصر", phone: "0227773333", address: "الدقي", balance: "800.00" },
+      { code: "S004", name: "شركة الورق الحديث", phone: "0228884444", address: "6 أكتوبر", balance: "0" },
+      { code: "S005", name: "توكيلات الأدوات الهندسية", phone: "01020003000", address: "وسط البلد", balance: "420.00" },
+    ]);
 
-  await db.insert(settings).values(
-    Object.entries(DEFAULT_SETTINGS).map(([key, value]) => ({ key, value })),
-  );
+    await tx.insert(employees).values([
+      { name: "admin", phone: "01000000000", jobTitle: "مدير النظام", salary: "12000", hireDate: "2022-01-01", active: true },
+      { name: "سارة محمود", phone: "01011110001", jobTitle: "كاشير", salary: "4500", hireDate: "2023-09-01", active: true },
+      { name: "محمود حسن", phone: "01011110002", jobTitle: "محاسب", salary: "7000", hireDate: "2022-06-15", active: true },
+      { name: "حسام علي", phone: "01011110003", jobTitle: "أمين مخزن", salary: "5000", hireDate: "2023-02-10", active: true },
+      { name: "نورا إبراهيم", phone: "01011110004", jobTitle: "بائع", salary: "4200", hireDate: "2024-01-20", active: true },
+      { name: "خالد يوسف", phone: "01011110005", jobTitle: "مندوب مشتريات", salary: "5500", hireDate: "2023-11-01", active: true },
+    ]);
 
-  const today = new Date();
-  const dateStr = today.toISOString().slice(0, 10);
-  await db.insert(attendance).values([
-    { employeeId: 2, date: dateStr, checkIn: "09:02", checkOut: "", notes: "" },
-    { employeeId: 4, date: dateStr, checkIn: "08:50", checkOut: "", notes: "" },
-    { employeeId: 5, date: dateStr, checkIn: "09:10", checkOut: "", notes: "" },
-  ]);
+    await tx.insert(settings).values(
+      Object.entries(DEFAULT_SETTINGS).map(([key, value]) => ({ key, value })),
+    );
 
-  await db.insert(cashTransactions).values([
-    {
-      type: "receipt",
-      partyType: "customer",
-      partyId: 3,
-      partyName: "أحمد محمد علي",
-      amount: "120.00",
-      treasuryId: 1,
-      notes: "تحصيل مديونية سابقة",
-      date: today,
-    },
-  ]);
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10);
+    await tx.insert(attendance).values([
+      { employeeId: 2, date: dateStr, checkIn: "09:02", checkOut: "", notes: "" },
+      { employeeId: 4, date: dateStr, checkIn: "08:50", checkOut: "", notes: "" },
+      { employeeId: 5, date: dateStr, checkIn: "09:10", checkOut: "", notes: "" },
+    ]);
 
-  await db.insert(expenses).values([
-    { category: "كهرباء", amount: "850.00", treasuryId: 2, notes: "فاتورة الشهر", date: today },
-    { category: "نقل", amount: "200.00", treasuryId: 1, notes: "توصيل بضاعة", date: today },
-  ]);
+    await tx.insert(cashTransactions).values([
+      {
+        type: "receipt",
+        partyType: "customer",
+        partyId: 3,
+        partyName: "أحمد محمد علي",
+        amount: "120.00",
+        treasuryId: 1,
+        notes: "تحصيل مديونية سابقة",
+        date: today,
+      },
+    ]);
 
-  await db.insert(warehouseTransfers).values([
-    {
-      fromWarehouseId: 1,
-      toWarehouseId: 2,
-      itemId: 1,
-      qty: "20",
-      notes: "تغطية المعرض",
-      date: today,
-    },
-  ]);
+    await tx.insert(expenses).values([
+      { category: "كهرباء", amount: "850.00", treasuryId: 2, notes: "فاتورة الشهر", date: today },
+      { category: "نقل", amount: "200.00", treasuryId: 1, notes: "توصيل بضاعة", date: today },
+    ]);
 
-  await db.insert(installments).values([
-    {
-      customerId: 2,
-      invoiceId: null,
-      title: "توريد مستلزمات الترم الأول",
-      total: "2400.00",
-      downPayment: "600.00",
-      remaining: "1800.00",
-      months: 4,
-      monthlyAmount: "450.00",
-      startDate: dateStr,
-      status: "active",
-      notes: "مدرسة النور — تقسيط كتب وكراسات",
-    },
-    {
-      customerId: 5,
-      invoiceId: null,
-      title: "باقة حضانة البراعم",
-      total: "800.00",
-      downPayment: "200.00",
-      remaining: "600.00",
-      months: 3,
-      monthlyAmount: "200.00",
-      startDate: dateStr,
-      status: "active",
-      notes: "ألوان وكراسات وشنط",
-    },
-  ]);
+    await tx.insert(warehouseTransfers).values([
+      {
+        fromWarehouseId: 1,
+        toWarehouseId: 2,
+        itemId: 1,
+        qty: "20",
+        notes: "تغطية المعرض",
+        date: today,
+      },
+    ]);
 
-  await ensureUsers();
-  return true;
+    await tx.insert(installments).values([
+      {
+        customerId: 2,
+        invoiceId: null,
+        title: "توريد مستلزمات الترم الأول",
+        total: "2400.00",
+        downPayment: "600.00",
+        remaining: "1800.00",
+        months: 4,
+        monthlyAmount: "450.00",
+        startDate: dateStr,
+        status: "active",
+        notes: "مدرسة النور — تقسيط كتب وكراسات",
+      },
+      {
+        customerId: 5,
+        invoiceId: null,
+        title: "باقة حضانة البراعم",
+        total: "800.00",
+        downPayment: "200.00",
+        remaining: "600.00",
+        months: 3,
+        monthlyAmount: "200.00",
+        startDate: dateStr,
+        status: "active",
+        notes: "ألوان وكراسات وشنط",
+      },
+    ]);
+
+    await ensureUsers(tx);
+    return true;
+  });
 }
 
-async function ensureSettings() {
-  const rows = await db.select().from(settings);
+async function ensureSettings(executor: SeedExecutor) {
+  const rows = await executor.select().from(settings);
   const have = new Set(rows.map((r) => r.key));
   const missing = Object.entries(DEFAULT_SETTINGS)
     .filter(([key]) => !have.has(key))
     .map(([key, value]) => ({ key, value }));
-  if (missing.length) await db.insert(settings).values(missing);
+  if (missing.length) await executor.insert(settings).values(missing);
 }
 
-async function ensureUsers() {
-  const existing = await db.select({ id: users.id }).from(users).limit(1);
+async function ensureUsers(executor: SeedExecutor) {
+  const existing = await executor.select({ id: users.id }).from(users).limit(1);
   if (existing.length) return;
-  await db.insert(users).values([
+  await executor.insert(users).values([
     { username: "admin", password: "1234", displayName: "مدير النظام", role: "admin" },
     { username: "sara", password: "1234", displayName: "سارة محمود", role: "cashier" },
     { username: "mahmoud", password: "1234", displayName: "محمود حسن", role: "accountant" },
   ]);
 }
 
-async function markBooksSaleOnly() {
-  const bookCat = await db.select().from(categories);
+async function markBooksSaleOnly(executor: SeedExecutor) {
+  const bookCat = await executor.select().from(categories);
   const id = bookCat.find((c) => c.name === "كتب خارجية")?.id;
   if (!id) return;
-  await db.update(items).set({ saleOnly: true }).where(eq(items.categoryId, id));
+  await executor.update(items).set({ saleOnly: true }).where(eq(items.categoryId, id));
 }
 
-async function ensureInstallments() {
-  const existing = await db.select({ id: installments.id }).from(installments).limit(1);
+async function ensureInstallments(executor: SeedExecutor) {
+  const existing = await executor.select({ id: installments.id }).from(installments).limit(1);
   if (existing.length) return;
   const dateStr = new Date().toISOString().slice(0, 10);
-  await db.insert(installments).values([
+  await executor.insert(installments).values([
     {
       customerId: 2,
       title: "توريد مستلزمات الترم الأول",
