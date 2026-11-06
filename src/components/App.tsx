@@ -14,7 +14,7 @@ export default function App() {
   const [active, setActive] = useState("home");
   const [menu, setMenu] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const showToast = useCallback((kind: Toast["kind"], text: string) => {
@@ -39,7 +39,7 @@ export default function App() {
 
   useEffect(() => {
     void reload();
-    const t = window.setInterval(() => setNow(new Date()), 1000);
+    const t = window.setInterval(() => setNow(new Date().toLocaleString("ar-EG")), 1000);
     return () => window.clearInterval(t);
   }, [reload]);
 
@@ -218,7 +218,7 @@ export default function App() {
         <span>
           المستخدم: <b>زائر</b>
         </span>
-        <span>التاريخ: {now.toLocaleString("ar-EG")}</span>
+        <span>التاريخ: {now}</span>
         <span>
           ترخيص البرنامج: <b>365</b> أيام
         </span>
