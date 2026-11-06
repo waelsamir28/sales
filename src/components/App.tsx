@@ -2,12 +2,9 @@
 
 import Dashboard from "@/components/Dashboard";
 import InvoicePos from "@/components/InvoicePos";
-import Login, { type SessionUser } from "@/components/Login";
 import { MODULE_TITLES, renderModule } from "@/components/Screens";
 import type { BootstrapData, ModuleId, Tab, Toast } from "@/lib/types";
 import { useCallback, useEffect, useState } from "react";
-
-const SESSION_KEY = "maktaba_session";
 
 const HOME: Tab = { id: "home", module: "home", title: "الرئيسية" };
 
@@ -19,7 +16,6 @@ export default function App() {
   const [toast, setToast] = useState<Toast | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [error, setError] = useState<string | null>(null);
-  const [session, setSession] = useState<SessionUser | null>(null);
 
   const showToast = useCallback((kind: Toast["kind"], text: string) => {
     setToast({ kind, text });
@@ -38,20 +34,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(SESSION_KEY);
-      if (raw) setSession(JSON.parse(raw) as SessionUser);
-    } catch {
-      setSession(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!session) return;
     void reload();
     const t = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(t);
-  }, [reload, session]);
+  }, [reload]);
 
   function openModule(module: ModuleId) {
     setMenu(null);
@@ -78,19 +64,6 @@ export default function App() {
     });
   }
 
-  function login(user: SessionUser) {
-    setSession(user);
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  }
-
-  function logout() {
-    setSession(null);
-    window.localStorage.removeItem(SESSION_KEY);
-    setData(null);
-    setTabs([HOME]);
-    setActive("home");
-  }
-
   const current = tabs.find((t) => t.id === active) ?? HOME;
   const theme = data?.settings.theme || "navy";
   const low = data ? data.items.filter((i) => Number(i.stock) <= Number(i.minStock)) : [];
@@ -104,10 +77,6 @@ export default function App() {
           : current.module === "purchase_return"
             ? "purchase_return"
             : null;
-
-  if (!session) {
-    return <Login onSuccess={login} theme={theme} />;
-  }
 
   return (
     <div className="desktop" data-theme={theme} onClick={() => setMenu(null)}>
@@ -134,7 +103,6 @@ export default function App() {
               { label: "معالج التثبيت والإعداد", action: () => openModule("setup") },
               { label: "الإعدادات", action: () => openModule("settings") },
               { label: "بيان الأسعار", action: () => openModule("prices") },
-              { label: "تسجيل خروج", action: () => logout() },
             ]}
           />
           <button type="button" onClick={() => openModule("customers")}>
@@ -244,7 +212,7 @@ export default function App() {
 
       <div className="statusbar">
         <span>
-          المستخدم: <b>{session.displayName}</b>
+          المستخدم: <b>زائر</b>
         </span>
         <span>التاريخ: {now.toLocaleString("ar-EG")}</span>
         <span>
