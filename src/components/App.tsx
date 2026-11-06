@@ -23,14 +23,18 @@ export default function App() {
   }, []);
 
   const reload = useCallback(async () => {
-    const res = await fetch("/api/bootstrap", { cache: "no-store" });
-    const json = (await res.json()) as { ok: boolean; data?: BootstrapData; error?: string };
-    if (!json.ok || !json.data) {
-      setError(json.error || "تعذر الاتصال بقاعدة البيانات");
-      return;
+    try {
+      const res = await fetch("/api/bootstrap", { cache: "no-store" });
+      const json = (await res.json()) as { ok: boolean; data?: BootstrapData; error?: string };
+      if (!res.ok || !json.ok || !json.data) {
+        setError(json.error || "تعذر الاتصال بقاعدة البيانات");
+        return;
+      }
+      setData(json.data);
+      setError(null);
+    } catch {
+      setError("تعذر الاتصال بقاعدة البيانات أو تحميل البيانات");
     }
-    setData(json.data);
-    setError(null);
   }, []);
 
   useEffect(() => {
