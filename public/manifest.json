@@ -1,0 +1,19 @@
+{
+  "name": "Sales Manager - مكتبة النور",
+  "short_name": "مبيعات النور",
+  "description": "نظام مبيعات لمحلات الأدوات المدرسية والمكتبية والكتب الخارجية",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1b1f27",
+  "theme_color": "#2f54d0",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
