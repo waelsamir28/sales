@@ -1450,6 +1450,23 @@ export function SettingsScreen({
     }
   }
 
+  async function applyTheme(id: string) {
+    setForm({ ...form, theme: id });
+    const root = document.querySelector(".desktop");
+    if (root) root.setAttribute("data-theme", id);
+    try {
+      await fetch("/api/ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "settings", entries: { theme: id } }),
+      });
+      toast("ok", `تم تغيير ألوان البرنامج`);
+      await reload();
+    } catch {
+      toast("err", "تعذر حفظ اللون");
+    }
+  }
+
   const set = (key: string, value: string) =>
     setForm({ ...form, [key]: value });
   const storeName = form.store_name || "مكتبة الجمال";
@@ -1853,13 +1870,16 @@ export function SettingsScreen({
                 <button
                   key={t.id}
                   type="button"
-                  className={`theme-swatch ${form.theme === t.id ? "on" : ""}`}
+                  className={`theme-swatch ${(form.theme || "navy") === t.id ? "on" : ""}`}
                   style={{ background: t.bg }}
-                  onClick={() => set("theme", t.id)}
+                  onClick={() => void applyTheme(t.id)}
                 >
                   {t.label}
                 </button>
               ))}
+            </div>
+            <div className="theme-note">
+              اللون بيتغيّر فورًا على طول البرنامج — واضغط «حفظ» عشان يفضل بعد إعادة التشغيل.
             </div>
             <div className="set-fields">
               <label className="fl fl-select">

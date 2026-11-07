@@ -5,6 +5,8 @@
   --menu: #2f54d0;
   --bar1: #5b83ec;
   --bar2: #1f4fc0;
+  --bar-deep: #1b3f9b;
+  --bar-dark: #122a6b;
   --menu1: #4a6be4;
   --menu2: #2f54d0;
   --accent: #2563eb;
@@ -1665,18 +1667,22 @@ table.data td.cell-name,
 
 .desktop[data-theme="emerald"], .login[data-theme="emerald"] {
   --bar1: #34d399; --bar2: #047857; --menu1: #10b981; --menu2: #065f46; --menu: #059669; --accent: #059669;
+  --bar-deep: #075e45; --bar-dark: #03392a;
   --surface: #e6f4ec; --sb-track: #e3efe8; --sb-thumb: #7aa992;
 }
 .desktop[data-theme="burgundy"], .login[data-theme="burgundy"] {
   --bar1: #e11d48; --bar2: #9f1239; --menu1: #be123c; --menu2: #881337; --menu: #9f1239; --accent: #e11d48;
+  --bar-deep: #8b0f32; --bar-dark: #590a20;
   --surface: #f6e9ec; --sb-track: #f2e3e7; --sb-thumb: #b5828e;
 }
 .desktop[data-theme="gold"], .login[data-theme="gold"] {
   --bar1: #d4a017; --bar2: #7c4a03; --menu1: #ca8a04; --menu2: #854d0e; --menu: #b45309; --accent: #ca8a04;
+  --bar-deep: #6d4003; --bar-dark: #412602;
   --surface: #f7f0e2; --sb-track: #f2ead9; --sb-thumb: #b6a077;
 }
 .desktop[data-theme="dark"], .login[data-theme="dark"] {
   --bar1: #475569; --bar2: #0f172a; --menu1: #334155; --menu2: #020617; --menu: #1e293b; --accent: #38bdf8;
+  --bar-deep: #0b1220; --bar-dark: #020617;
   --surface: #1f2530; --sb-track: #262d39; --sb-thumb: #5b6675;
 }
 
@@ -2531,10 +2537,10 @@ table.data td.cell-name { text-align: center; }
 .tile .label { font-size: 13px; font-weight: 800; text-align: center; line-height: 1.2; white-space: nowrap; }
 .tile .icon { width: 46px; height: 46px; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25)); }
 
-/* الشريط العلوى الغامق */
+/* الشريط العلوى: أغمق درجة من لون التطبيق */
 .titlebar {
-  background: linear-gradient(180deg, #1f2937, #0f172a) !important;
-  border-bottom: 1px solid #0b1220;
+  background: linear-gradient(180deg, var(--bar-deep), var(--bar-dark)) !important;
+  border-bottom: 1px solid var(--bar-dark);
 }
 
 .titlebar-title { font-size: 13px; }
@@ -2551,7 +2557,7 @@ table.data td.cell-name { text-align: center; }
 
 /* رأس الرئيسية */
 .dash-head {
-  background: linear-gradient(180deg, #1f2937, #111827);
+  background: linear-gradient(180deg, var(--bar-deep), var(--bar-dark));
 }
 
 .dash-user {
@@ -3239,3 +3245,57 @@ textarea.win-input {
 .pos .qty-input { height: 18px !important; }
 .pos .cat-btn { height: 23px; font-size: 11.5px; }
 .pos .fk { height: 23px; }
+
+/* ================= إعدادات المظهر: ألوان كل ثيم (أوضح وأغمق) ================= */
+.desktop[data-theme="navy"],
+.login[data-theme="navy"] {
+  --bar1: #5b83ec; --bar2: #1f4fc0; --menu1: #4a6be4; --menu2: #2f54d0; --menu: #2f54d0; --accent: #2563eb;
+  --bar-deep: #1b3f9b; --bar-dark: #122a6b;
+  --surface: #e7ebf2; --sb-track: #eef2f7; --sb-thumb: #94a3b8;
+}
+
+/* زر الثيم المختار */
+.theme-swatch {
+  position: relative;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.theme-swatch:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25); }
+.theme-swatch.on {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.18);
+}
+.theme-swatch.on::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.theme-note {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  padding: 0 12px 6px;
+  text-align: center;
+}
+
+/* خلفية الرئيسية تتبع لون التطبيق بدل الأسود الثابت */
+.dash {
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.10), transparent 24%),
+    linear-gradient(180deg, rgba(8, 12, 22, 0.28), rgba(6, 9, 16, 0.55)),
+    linear-gradient(135deg, var(--bar-deep) 0%, var(--bar-dark) 55%, #0a0f18 100%);
+}
+
+/* توهج لونى خفيف حول الكروت */
+.tile-wrap { position: relative; }
+
+/* الشريط السفلى والعلوى بلون التطبيق */
+.statusbar { background: var(--bar-dark); }
