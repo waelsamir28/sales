@@ -27,7 +27,6 @@ export function SubTabs({
           </button>
         ))}
       </div>
-      <div className="subtabs-bar" aria-hidden="true" />
     </div>
   );
 }
