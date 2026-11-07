@@ -398,59 +398,33 @@ export default function InvoicePos({
 
         <div className="pos-top">
           <div className="pos-row head-row">
-            <div className="field party-field party-wide">
+            {/* ١) العميل */}
+            <div className="field party-field">
               <span>{meta.party === "customer" ? "العميل" : "المورد"}</span>
-              <select
-                className="win-input inp-name party-input"
-                value={partyId}
-                onChange={(e) => setPartyId(Number(e.target.value))}
-              >
-                {parties.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="add-party"
-                title="إضافة عميل جديد"
-                onClick={openCustomerForm}
-              >
-                ＋
-              </button>
+              <div className="party-inline">
+                <select
+                  className="win-input party-input"
+                  value={partyId}
+                  onChange={(e) => setPartyId(Number(e.target.value))}
+                >
+                  {parties.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="add-party"
+                  title="إضافة عميل جديد"
+                  onClick={openCustomerForm}
+                >
+                  ＋
+                </button>
+              </div>
             </div>
 
-            <div className="field">
-              <span>التاريخ</span>
-              <input className="win-input inp-dt" value={dateOnly} readOnly />
-            </div>
-
-            <div className="field">
-              <span>الساعة</span>
-              <input className="win-input inp-dt" value={timeOnly} readOnly />
-            </div>
-
-            <div className="field mini-field">
-              <span>نوع الفاتورة</span>
-              <select className="win-input inp-type" defaultValue="عادي">
-                <option>عادي</option>
-                <option>جملة</option>
-              </select>
-            </div>
-
-            <div className="field mini-field">
-              <span>نوع الدفع</span>
-              <select
-                className="win-input inp-type"
-                value={paymentType}
-                onChange={(e) => setPaymentType(e.target.value as "cash" | "credit")}
-              >
-                <option value="cash">نقدي</option>
-                <option value="credit">آجل</option>
-              </select>
-            </div>
-
+            {/* ٢) الكود + بحث الصنف */}
             <div className="code-search-box">
               <div className="field">
                 <span>الكود</span>
@@ -472,9 +446,40 @@ export default function InvoicePos({
                   onChange={(e) => setQuery(e.target.value)}
                 />
               </div>
-              <label className="check">
-                <input type="checkbox" defaultChecked /> تجميع الكميات
-              </label>
+            </div>
+
+            {/* ٣) التاريخ + الساعة */}
+            <div className="dt-group">
+              <div className="field">
+                <span>التاريخ</span>
+                <input className="win-input inp-dt" value={dateOnly} readOnly />
+              </div>
+              <div className="field">
+                <span>الساعة</span>
+                <input className="win-input inp-dt" value={timeOnly} readOnly />
+              </div>
+            </div>
+
+            {/* ٤) النوع + الدفع */}
+            <div className="dt-group">
+              <div className="field">
+                <span>نوع الفاتورة</span>
+                <select className="win-input inp-type" defaultValue="عادي">
+                  <option>عادي</option>
+                  <option>جملة</option>
+                </select>
+              </div>
+              <div className="field">
+                <span>نوع الدفع</span>
+                <select
+                  className="win-input inp-type"
+                  value={paymentType}
+                  onChange={(e) => setPaymentType(e.target.value as "cash" | "credit")}
+                >
+                  <option value="cash">نقدي</option>
+                  <option value="credit">آجل</option>
+                </select>
+              </div>
             </div>
           </div>
 
