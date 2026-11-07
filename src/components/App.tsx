@@ -87,7 +87,7 @@ export default function App() {
       <div className="titlebar">
         <div className="titlebar-title">
           <span>📚</span>
-          <span>Sales Manager — مكتبة النور للأدوات المدرسية والمكتبية</span>
+          <span>Sales Manager — مكتبة الجمال للأدوات المدرسية والمكتبية</span>
         </div>
         <div className="win-btns">
           <span>_</span>
@@ -196,7 +196,7 @@ export default function App() {
         {toast && <div className={`toast ${toast.kind}`}>{toast.text}</div>}
         {!data && !error && (
           <div className="screen" style={{ alignItems: "center", justifyContent: "center" }}>
-            جارى تحميل بيانات مكتبة النور...
+            جارى تحميل بيانات مكتبة الجمال...
           </div>
         )}
         {error && (
@@ -222,7 +222,7 @@ export default function App() {
         <span>
           ترخيص البرنامج: <b>365</b> أيام
         </span>
-        <span>Copyright © Maktab Soft 2026 — مكتبة النور</span>
+        <span>Copyright © Maktab Soft 2026 — مكتبة الجمال</span>
       </div>
     </div>
   );

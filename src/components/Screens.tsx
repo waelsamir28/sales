@@ -9,6 +9,8 @@ import {
   TopItemsView,
   profitSummary,
 } from "@/components/Finance";
+import InvoicePreview from "@/components/InvoicePreview";
+import { printInvoice } from "@/lib/invoice-print";
 import { n } from "@/lib/money";
 import type { BootstrapData, Item, ModuleId } from "@/lib/types";
 import { useState, type ReactNode } from "react";
@@ -880,7 +882,7 @@ export function StatsScreen({ data }: { data: BootstrapData }) {
   const max = Math.max(...byCat.map((c) => c.count), 1);
 
   return (
-    <Panel title="إحصائيات مكتبة النور">
+    <Panel title="إحصائيات مكتبة الجمال">
       <div className="kpi-row">
         <div className="kpi">
           <span className="l">مبيعات محفوظة</span>
@@ -1058,148 +1060,506 @@ export function SettingsScreen({
   toast: (k: "ok" | "err" | "info", t: string) => void;
 }) {
   const [form, setForm] = useState(data.settings);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
   async function save() {
-    await fetch("/api/ops", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "settings", entries: form }),
-    });
-    toast("ok", "تم حفظ الإعدادات");
-    await reload();
+    setBusy(true);
+    try {
+      await fetch("/api/ops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "settings", entries: form }),
+      });
+      toast("ok", "تم حفظ الإعدادات");
+      await reload();
+    } finally {
+      setBusy(false);
+    }
   }
-  const set = (key: string, value: string) => setForm({ ...form, [key]: value });
+
+  const set = (key: string, value: string) =>
+    setForm({ ...form, [key]: value });
+  const storeName = form.store_name || "مكتبة الجمال";
+  const currency = form.currency || "جنيه";
+
+  const demoLines = [
+    {
+      code: "1003",
+      name: "كشكول 60 ورقة",
+      unit: "عدد",
+      qty: 3,
+      price: 12.5,
+      total: 37.5,
+    },
+    {
+      code: "1006",
+      name: "مسطرة 30 سم",
+      unit: "عدد",
+      qty: 2,
+      price: 8,
+      total: 16,
+    },
+    {
+      code: "1011",
+      name: "ألوان خشبية 12 لون",
+      unit: "علبة",
+      qty: 1,
+      price: 65,
+      total: 65,
+    },
+  ];
+  const demoTotal = demoLines.reduce((sum, l) => sum + l.total, 0);
+
+  const previewData = {
+    storeName,
+    storeActivity: form.store_activity,
+    phone: form.phone,
+    whatsapp: form.whatsapp,
+    website: form.website,
+    email: form.email,
+    title: form.invoice_doc_title || "فاتورة بيع",
+    number: form.invoice_prefix ? `${form.invoice_prefix}-4001` : 4001,
+    date: new Date()
+      .toLocaleString("en-GB", { hour12: false })
+      .replace(",", ""),
+    partyLabel: "العميل",
+    partyName: "مدرسة النور الابتدائية",
+    warehouseName: data.warehouses[0]?.name,
+    treasuryName: data.treasuries[0]?.name,
+    paymentType: "نقدي",
+    lines: demoLines,
+    itemCount: demoLines.length,
+    qtyTotal: demoLines.reduce((sum, l) => sum + l.qty, 0),
+    subtotal: demoTotal,
+    delivery: 0,
+    total: demoTotal,
+    paid: demoTotal,
+    remaining: 0,
+    notes: "معاينة تجريبية — يمكنك تغيير التصميم والألوان من هنا ثم الحفظ",
+    footer: form.invoice_footer,
+    currency,
+    accent: form.invoice_accent,
+  };
+
+  const themes = [
+    { id: "navy", label: "أزرق", bg: "#2f54d0" },
+    { id: "emerald", label: "أخضر", bg: "#059669" },
+    { id: "burgundy", label: "نبيتي", bg: "#9f1239" },
+    { id: "gold", label: "ذهبي", bg: "#b45309" },
+    { id: "dark", label: "ليلي", bg: "#1e293b" },
+  ];
+
   return (
-    <Panel title="إعدادات المكتبة">
-      <div className="form-row">
-        <label className="fl fl-name">
-          <span>اسم المحل</span>
-          <input className="win-input" value={form.store_name || ""} onChange={(e) => set("store_name", e.target.value)} />
-        </label>
-        <label className="fl fl-activity">
-          <span>النشاط</span>
-          <input className="win-input" value={form.store_activity || ""} onChange={(e) => set("store_activity", e.target.value)} />
-        </label>
-        <label className="fl fl-name">
-          <span>اسم المستخدم</span>
-          <input className="win-input" value={form.user_name || ""} onChange={(e) => set("user_name", e.target.value)} />
-        </label>
+    <Panel
+      title="إعدادات المكتبة"
+      extra={<span className="badge info">{storeName}</span>}
+    >
+      <div className="settings-scroll">
+        <div className="settings-grid">
+          {/* 1) بيانات المكتبة */}
+          <section className="set-card">
+            <h3>🏪 بيانات المكتبة</h3>
+            <div className="set-fields">
+              <label className="fl fl-name">
+                <span>اسم المكتبة</span>
+                <input
+                  className="win-input"
+                  value={form.store_name || ""}
+                  onChange={(e) => set("store_name", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-activity">
+                <span>النشاط</span>
+                <input
+                  className="win-input"
+                  value={form.store_activity || ""}
+                  onChange={(e) => set("store_activity", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-phone">
+                <span>الهاتف</span>
+                <input
+                  className="win-input num"
+                  value={form.phone || ""}
+                  onChange={(e) => set("phone", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-phone">
+                <span>واتساب</span>
+                <input
+                  className="win-input num"
+                  value={form.whatsapp || ""}
+                  onChange={(e) => set("whatsapp", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-name">
+                <span>الموقع</span>
+                <input
+                  className="win-input"
+                  value={form.website || ""}
+                  onChange={(e) => set("website", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-name">
+                <span>البريد</span>
+                <input
+                  className="win-input"
+                  value={form.email || ""}
+                  onChange={(e) => set("email", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-name">
+                <span>اسم المستخدم</span>
+                <input
+                  className="win-input"
+                  value={form.user_name || ""}
+                  onChange={(e) => set("user_name", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-code">
+                <span>العملة</span>
+                <input
+                  className="win-input"
+                  value={form.currency || "جنيه"}
+                  onChange={(e) => set("currency", e.target.value)}
+                />
+              </label>
+            </div>
+          </section>
+
+          {/* 2) تصميم الفاتورة */}
+          <section className="set-card">
+            <h3>🧾 تصميم الفاتورة</h3>
+            <div className="set-fields">
+              <label className="fl fl-select">
+                <span>عنوان المستند</span>
+                <input
+                  className="win-input"
+                  value={form.invoice_doc_title || "فاتورة بيع"}
+                  onChange={(e) => set("invoice_doc_title", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-code">
+                <span>بادئة الفاتورة</span>
+                <input
+                  className="win-input num"
+                  value={form.invoice_prefix || "INV"}
+                  onChange={(e) => set("invoice_prefix", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-select">
+                <span>حجم الورق</span>
+                <select
+                  className="win-input"
+                  value={form.invoice_paper || "A4"}
+                  onChange={(e) => set("invoice_paper", e.target.value)}
+                >
+                  <option value="A4">A4</option>
+                  <option value="A5">A5</option>
+                  <option value="thermal">حراري 80mm</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>لون الفاتورة</span>
+                <select
+                  className="win-input"
+                  value={form.invoice_accent || "#2f54d0"}
+                  onChange={(e) => set("invoice_accent", e.target.value)}
+                >
+                  <option value="#2f54d0">أزرق</option>
+                  <option value="#059669">أخضر</option>
+                  <option value="#9f1239">نبيتي</option>
+                  <option value="#b45309">ذهبي</option>
+                  <option value="#334155">رمادي</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>إظهار الأصناف</span>
+                <select
+                  className="win-input"
+                  value={form.invoice_show_items || "1"}
+                  onChange={(e) => set("invoice_show_items", e.target.value)}
+                >
+                  <option value="1">نعم</option>
+                  <option value="0">لا</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>إظهار الكمية</span>
+                <select
+                  className="win-input"
+                  value={form.invoice_show_qty || "1"}
+                  onChange={(e) => set("invoice_show_qty", e.target.value)}
+                >
+                  <option value="1">نعم</option>
+                  <option value="0">لا</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>إظهار النوع</span>
+                <select
+                  className="win-input"
+                  value={form.invoice_show_type || "1"}
+                  onChange={(e) => set("invoice_show_type", e.target.value)}
+                >
+                  <option value="1">نعم</option>
+                  <option value="0">لا</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>تذييل الفاتورة</span>
+                <select
+                  className="win-input"
+                  value={form.invoice_show_footer || "1"}
+                  onChange={(e) => set("invoice_show_footer", e.target.value)}
+                >
+                  <option value="1">نعم</option>
+                  <option value="0">لا</option>
+                </select>
+              </label>
+              <label className="fl fl-full">
+                <span>نص تذييل الفاتورة</span>
+                <input
+                  className="win-input"
+                  value={form.invoice_footer || ""}
+                  onChange={(e) => set("invoice_footer", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-full">
+                <span>لوجو المكتبة (نص أو رابط)</span>
+                <input
+                  className="win-input"
+                  value={form.invoice_logo || ""}
+                  onChange={(e) => set("invoice_logo", e.target.value)}
+                />
+              </label>
+            </div>
+            <div className="set-actions">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setPreviewOpen(true)}
+              >
+                👁 معاينة تصميم الفاتورة
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() =>
+                  printInvoice({
+                    ...previewData,
+                    footer: form.invoice_footer,
+                    currency,
+                    accent: form.invoice_accent,
+                    paper: form.invoice_paper,
+                    showItems: form.invoice_show_items !== "0",
+                    showQty: form.invoice_show_qty !== "0",
+                    showType: form.invoice_show_type !== "0",
+                    showFooter: form.invoice_show_footer !== "0",
+                    logoText: form.invoice_logo,
+                  })
+                }
+              >
+                🖨 طباعة معاينة
+              </button>
+            </div>
+          </section>
+
+          {/* 3) المبيعات والفاتورة */}
+          <section className="set-card">
+            <h3>🛒 المبيعات والكاشير</h3>
+            <div className="set-fields">
+              <label className="fl fl-select">
+                <span>البيع الآجل</span>
+                <select
+                  className="win-input"
+                  value={form.allow_credit || "1"}
+                  onChange={(e) => set("allow_credit", e.target.value)}
+                >
+                  <option value="1">مسموح</option>
+                  <option value="0">نقدي فقط</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>بيع بدون رصيد</span>
+                <select
+                  className="win-input"
+                  value={form.allow_negative_stock || "0"}
+                  onChange={(e) => set("allow_negative_stock", e.target.value)}
+                >
+                  <option value="0">ممنوع</option>
+                  <option value="1">مسموح</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>الكتب للبيع فقط</span>
+                <select
+                  className="win-input"
+                  value={form.books_no_return || "1"}
+                  onChange={(e) => set("books_no_return", e.target.value)}
+                >
+                  <option value="1">لا استبدال</option>
+                  <option value="0">مسموح مرتجع</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>طباعة بعد الحفظ</span>
+                <select
+                  className="win-input"
+                  value={form.print_after_save || "0"}
+                  onChange={(e) => set("print_after_save", e.target.value)}
+                >
+                  <option value="1">نعم</option>
+                  <option value="0">لا</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>صوت اختيار الصنف</span>
+                <select
+                  className="win-input"
+                  value={form.pos_sound || "1"}
+                  onChange={(e) => set("pos_sound", e.target.value)}
+                >
+                  <option value="1">تشغيل</option>
+                  <option value="0">إيقاف</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>الوردية</span>
+                <select
+                  className="win-input"
+                  value={form.cashier_shift || "صباحي"}
+                  onChange={(e) => set("cashier_shift", e.target.value)}
+                >
+                  <option>صباحي</option>
+                  <option>مسائي</option>
+                </select>
+              </label>
+              <label className="fl fl-num">
+                <span>شهور التقسيط</span>
+                <input
+                  className="win-input num"
+                  value={form.default_installment_months || "4"}
+                  onChange={(e) =>
+                    set("default_installment_months", e.target.value)
+                  }
+                />
+              </label>
+              <label className="fl fl-num">
+                <span>حد هامش الربح</span>
+                <input
+                  className="win-input num"
+                  value={form.min_profit_percent || "15"}
+                  onChange={(e) => set("min_profit_percent", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-num">
+                <span>نسبة الضريبة</span>
+                <input
+                  className="win-input num"
+                  value={form.tax_percent || "0"}
+                  onChange={(e) => set("tax_percent", e.target.value)}
+                />
+              </label>
+              <label className="fl fl-date">
+                <span>السنة المالية</span>
+                <input
+                  className="win-input num"
+                  value={form.fiscal_year || "2026"}
+                  onChange={(e) => set("fiscal_year", e.target.value)}
+                />
+              </label>
+            </div>
+          </section>
+
+          {/* 4) المظهر والألوان */}
+          <section className="set-card">
+            <h3>🎨 المظهر وألوان البرنامج</h3>
+            <div className="theme-row">
+              {themes.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`theme-swatch ${form.theme === t.id ? "on" : ""}`}
+                  style={{ background: t.bg }}
+                  onClick={() => set("theme", t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className="set-fields">
+              <label className="fl fl-select">
+                <span>تنبيه الحد الأدنى</span>
+                <select
+                  className="win-input"
+                  value={form.low_stock_alert || "1"}
+                  onChange={(e) => set("low_stock_alert", e.target.value)}
+                >
+                  <option value="1">تشغيل</option>
+                  <option value="0">إيقاف</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>تقريب النقدية</span>
+                <select
+                  className="win-input"
+                  value={form.round_cash || "0"}
+                  onChange={(e) => set("round_cash", e.target.value)}
+                >
+                  <option value="0">لا</option>
+                  <option value="1">نعم</option>
+                </select>
+              </label>
+              <label className="fl fl-select">
+                <span>الأسعار شاملة الضريبة</span>
+                <select
+                  className="win-input"
+                  value={form.price_include_tax || "0"}
+                  onChange={(e) => set("price_include_tax", e.target.value)}
+                >
+                  <option value="0">لا</option>
+                  <option value="1">نعم</option>
+                </select>
+              </label>
+            </div>
+            <p className="set-hint">
+              الألوان تُطبَّق على شريط القوائم والأزرار والعناوين في كل الشاشات.
+            </p>
+          </section>
+        </div>
       </div>
-      <div className="form-row">
-        <label className="fl fl-phone">
-          <span>الهاتف</span>
-          <input className="win-input num" value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} />
-        </label>
-        <label className="fl fl-phone">
-          <span>واتساب</span>
-          <input className="win-input num" value={form.whatsapp || ""} onChange={(e) => set("whatsapp", e.target.value)} />
-        </label>
-        <label className="fl fl-name">
-          <span>الموقع</span>
-          <input className="win-input" value={form.website || ""} onChange={(e) => set("website", e.target.value)} />
-        </label>
-        <label className="fl fl-name">
-          <span>البريد</span>
-          <input className="win-input" value={form.email || ""} onChange={(e) => set("email", e.target.value)} />
-        </label>
-        <label className="fl fl-num">
-          <span>نسبة الضريبة</span>
-          <input className="win-input num" value={form.tax_percent || "0"} onChange={(e) => set("tax_percent", e.target.value)} />
-        </label>
-      </div>
-      <div className="form-row">
-        <label className="fl fl-full">
-          <span>تذييل الفاتورة</span>
-          <input className="win-input" value={form.invoice_footer || ""} onChange={(e) => set("invoice_footer", e.target.value)} />
-        </label>
-      </div>
-      <div className="form-row">
-        <label className="fl fl-unit">
-          <span>العملة</span>
-          <input className="win-input" value={form.currency || "جنيه"} onChange={(e) => set("currency", e.target.value)} />
-        </label>
-        <label className="fl fl-date">
-          <span>السنة المالية</span>
-          <input className="win-input num" value={form.fiscal_year || "2026"} onChange={(e) => set("fiscal_year", e.target.value)} />
-        </label>
-        <label className="fl fl-code">
-          <span>بادئة الفاتورة</span>
-          <input className="win-input num" value={form.invoice_prefix || "INV"} onChange={(e) => set("invoice_prefix", e.target.value)} />
-        </label>
-        <label className="fl fl-select">
-          <span>الوردية</span>
-          <select className="win-input" value={form.cashier_shift || "صباحي"} onChange={(e) => set("cashier_shift", e.target.value)}>
-            <option>صباحي</option>
-            <option>مسائي</option>
-          </select>
-        </label>
-        <label className="fl fl-select">
-          <span>البيع الآجل</span>
-          <select className="win-input" value={form.allow_credit || "1"} onChange={(e) => set("allow_credit", e.target.value)}>
-            <option value="1">مسموح</option>
-            <option value="0">نقدي فقط</option>
-          </select>
-        </label>
-        <label className="fl fl-num">
-          <span>شهور التقسيط</span>
-          <input className="win-input num" value={form.default_installment_months || "4"} onChange={(e) => set("default_installment_months", e.target.value)} />
-        </label>
-        <label className="fl fl-num">
-          <span>حد هامش الربح</span>
-          <input className="win-input num" value={form.min_profit_percent || "15"} onChange={(e) => set("min_profit_percent", e.target.value)} />
-        </label>
-        <label className="fl fl-select">
-          <span>تنبيه الحد الأدنى</span>
-          <select className="win-input" value={form.low_stock_alert || "1"} onChange={(e) => set("low_stock_alert", e.target.value)}>
-            <option value="1">تشغيل</option>
-            <option value="0">إيقاف</option>
-          </select>
-        </label>
-        <label className="fl fl-select">
-          <span>طباعة بعد الحفظ</span>
-          <select className="win-input" value={form.print_after_save || "0"} onChange={(e) => set("print_after_save", e.target.value)}>
-            <option value="1">نعم</option>
-            <option value="0">لا</option>
-          </select>
-        </label>
-        <label className="fl fl-select">
-          <span>بيع بدون رصيد</span>
-          <select className="win-input" value={form.allow_negative_stock || "0"} onChange={(e) => set("allow_negative_stock", e.target.value)}>
-            <option value="0">ممنوع</option>
-            <option value="1">مسموح</option>
-          </select>
-        </label>
-        <label className="fl fl-select">
-          <span>الكتب للبيع فقط</span>
-          <select className="win-input" value={form.books_no_return || "1"} onChange={(e) => set("books_no_return", e.target.value)}>
-            <option value="1">لا استبدال</option>
-            <option value="0">مسموح مرتجع</option>
-          </select>
-        </label>
-      </div>
-      <div className="theme-row">
-        {[
-          { id: "navy", label: "أزرق", bg: "#2f54d0" },
-          { id: "emerald", label: "أخضر", bg: "#059669" },
-          { id: "burgundy", label: "نبيتي", bg: "#9f1239" },
-          { id: "gold", label: "ذهبي", bg: "#b45309" },
-          { id: "dark", label: "ليلي", bg: "#1e293b" },
-        ].map((t) => (
+
+      <div className="settings-bar">
+        <span className="muted">
+          التغييرات تُحفظ مرة واحدة عند الضغط على «حفظ الإعدادات»
+        </span>
+        <div className="settings-bar-actions">
           <button
-            key={t.id}
             type="button"
-            className={`theme-swatch ${form.theme === t.id ? "on" : ""}`}
-            style={{ background: t.bg }}
-            onClick={() => set("theme", t.id)}
+            className="btn"
+            onClick={() => setForm(data.settings)}
           >
-            {t.label}
+            استرجاع
           </button>
-        ))}
+          <button
+            type="button"
+            className="btn primary"
+            disabled={busy}
+            onClick={() => void save()}
+          >
+            {busy ? "جارى الحفظ..." : "حفظ الإعدادات"}
+          </button>
+        </div>
       </div>
-      <div className="toolbar">
-        <button type="button" className="btn primary" onClick={() => void save()}>
-          حفظ الإعدادات
-        </button>
-      </div>
+
+      {previewOpen ? (
+        <InvoicePreview
+          data={previewData}
+          onClose={() => setPreviewOpen(false)}
+        />
+      ) : null}
     </Panel>
   );
 }
@@ -1215,7 +1575,7 @@ export function SetupScreen({
 }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    store_name: data.settings.store_name || "مكتبة النور",
+    store_name: data.settings.store_name || "مكتبة الجمال",
     store_activity: data.settings.store_activity || "أدوات مدرسية ومكتبية وكتب خارجية",
     phone: data.settings.phone || "",
     whatsapp: data.settings.whatsapp || "",
@@ -1335,7 +1695,7 @@ export function ContactScreen({ data }: { data: BootstrapData }) {
   return (
     <Panel title="اتصل بنا">
       <div style={{ padding: 18, lineHeight: 1.9 }}>
-        <h2 style={{ margin: 0 }}>{data.settings.store_name || "مكتبة النور"}</h2>
+        <h2 style={{ margin: 0 }}>{data.settings.store_name || "مكتبة الجمال"}</h2>
         <p>{data.settings.store_activity}</p>
         <p>هاتف / واتساب: {data.settings.whatsapp}</p>
         <p>الموقع: {data.settings.website}</p>
