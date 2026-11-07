@@ -3,6 +3,24 @@ import { customers, employees, suppliers } from "@/db/schema";
 import { money, n } from "@/lib/money";
 import { eq } from "drizzle-orm";
 
+/** أكواد تلقائية للعملاء/الموردين — لو الكود فاضى أو مكرر بنولّد أكبر كود + 1 */
+async function nextCode(kind: "customers" | "suppliers", current = "", skipId = 0) {
+  const rows =
+    kind === "customers"
+      ? await db.select({ id: customers.id, code: customers.code }).from(customers)
+      : await db.select({ id: suppliers.id, code: suppliers.code }).from(suppliers);
+  let max = 500;
+  for (const row of rows) {
+    const value = Number(row.code);
+    if (Number.isFinite(value) && value > max) max = value;
+  }
+  const trimmed = String(current).trim();
+  const dup =
+    !!trimmed && rows.some((r) => String(r.code).trim() === trimmed && r.id !== skipId);
+  if (trimmed && !dup) return trimmed;
+  return String(max + 1);
+}
+
 export const dynamic = "force-dynamic";
 
 type Kind = "customers" | "suppliers" | "employees";
@@ -20,7 +38,7 @@ export async function POST(request: Request) {
       const [row] = await db
         .insert(customers)
         .values({
-          code: String(body.code ?? ""),
+          code: await nextCode("customers", String(body.code ?? "")),
           name: String(body.name ?? ""),
           phone: String(body.phone ?? ""),
           address: String(body.address ?? ""),
@@ -33,7 +51,7 @@ export async function POST(request: Request) {
       const [row] = await db
         .insert(suppliers)
         .values({
-          code: String(body.code ?? ""),
+          code: await nextCode("suppliers", String(body.code ?? "")),
           name: String(body.name ?? ""),
           phone: String(body.phone ?? ""),
           address: String(body.address ?? ""),
@@ -70,7 +88,7 @@ export async function PUT(request: Request) {
       const [row] = await db
         .update(customers)
         .set({
-          code: String(body.code ?? ""),
+          code: await nextCode("customers", String(body.code ?? ""), id),
           name: String(body.name ?? ""),
           phone: String(body.phone ?? ""),
           address: String(body.address ?? ""),
@@ -84,7 +102,7 @@ export async function PUT(request: Request) {
       const [row] = await db
         .update(suppliers)
         .set({
-          code: String(body.code ?? ""),
+          code: await nextCode("suppliers", String(body.code ?? ""), id),
           name: String(body.name ?? ""),
           phone: String(body.phone ?? ""),
           address: String(body.address ?? ""),

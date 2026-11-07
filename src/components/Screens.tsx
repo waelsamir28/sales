@@ -628,6 +628,13 @@ export function PartyScreen({
     return !q || name.includes(q) || extra.includes(q);
   });
 
+  const nextPartyCode = String(
+    rows.reduce((max, r) => {
+      const value = "code" in r ? Number(r.code) : 0;
+      return Number.isFinite(value) && value > max ? value : max;
+    }, 500) + 1,
+  );
+
   async function save() {
     const method = Number(form.id) ? "PUT" : "POST";
     const res = await fetch("/api/parties", {
@@ -713,8 +720,13 @@ export function PartyScreen({
       <div className="form-row">
         {kind !== "employees" && (
           <label className="fl fl-code">
-            <span>الكود</span>
-            <input className="win-input num" value={String(form.code)} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+            <span>الكود (تلقائي)</span>
+            <input
+              className="win-input num code-auto"
+              value={String(form.code) || nextPartyCode}
+              readOnly
+              title="بيتولّد تلقائيًا عند الحفظ"
+            />
           </label>
         )}
         <label className="fl fl-name">
