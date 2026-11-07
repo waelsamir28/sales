@@ -25,34 +25,33 @@ import type { ReactNode } from "react";
 type TileDef = {
   module: ModuleId;
   label: string;
-  color: string;
   icon: ReactNode;
   wide?: boolean;
 };
 
 const OPS: TileDef[] = [
-  { module: "cash_out", label: "دفع نقدية", color: "#be185d", icon: <IconCashOut /> },
-  { module: "cash_in", label: "إستلام نقدية", color: "#0f766e", icon: <IconCashIn /> },
-  { module: "attendance", label: "حضور وانصراف", color: "#2563eb", icon: <IconAttendance /> },
-  { module: "transfers", label: "تحويلات مخازن", color: "#334155", icon: <IconTransfer /> },
-  { module: "stats", label: "إحصائيات", color: "#6d28d9", icon: <IconStats />, wide: true },
+  { module: "cash_out", label: "دفع نقدية", icon: <IconCashOut /> },
+  { module: "cash_in", label: "إستلام نقدية", icon: <IconCashIn /> },
+  { module: "attendance", label: "حضور وانصراف", icon: <IconAttendance /> },
+  { module: "transfers", label: "تحويلات مخازن", icon: <IconTransfer /> },
+  { module: "stats", label: "إحصائيات", icon: <IconStats />, wide: true },
 ];
 
 const INV: TileDef[] = [
-  { module: "sales", label: "فاتورة بيع", color: "#0284c7", icon: <IconSale />, wide: true },
-  { module: "sale_return", label: "مرتجع مبيعات", color: "#0369a1", icon: <IconSaleReturn /> },
-  { module: "purchase", label: "فاتورة مشتريات", color: "#b45309", icon: <IconPurchase /> },
-  { module: "prices", label: "بيان أسعار", color: "#1d4ed8", icon: <IconPrices /> },
-  { module: "purchase_return", label: "مرتجع مشتريات", color: "#0e7490", icon: <IconPurchaseReturn /> },
+  { module: "sales", label: "فاتورة بيع", icon: <IconSale />, wide: true },
+  { module: "sale_return", label: "مرتجع مبيعات", icon: <IconSaleReturn /> },
+  { module: "purchase", label: "فاتورة مشتريات", icon: <IconPurchase /> },
+  { module: "prices", label: "بيان أسعار", icon: <IconPrices /> },
+  { module: "purchase_return", label: "مرتجع مشتريات", icon: <IconPurchaseReturn /> },
 ];
 
 const ENT: TileDef[] = [
-  { module: "customers", label: "العملاء", color: "#16a34a", icon: <IconCustomers /> },
-  { module: "items", label: "الاصناف", color: "#d97706", icon: <IconItems /> },
-  { module: "employees", label: "الموظفين", color: "#4b5563", icon: <IconEmployees /> },
-  { module: "suppliers", label: "الموردين", color: "#ca8a04", icon: <IconSuppliers /> },
-  { module: "expenses", label: "المصروفات", color: "#854d0e", icon: <IconExpenses /> },
-  { module: "treasury", label: "الخزينة", color: "#7c2d12", icon: <IconTreasury /> },
+  { module: "customers", label: "العملاء", icon: <IconCustomers /> },
+  { module: "items", label: "الاصناف", icon: <IconItems /> },
+  { module: "employees", label: "الموظفين", icon: <IconEmployees /> },
+  { module: "suppliers", label: "الموردين", icon: <IconSuppliers /> },
+  { module: "expenses", label: "المصروفات", icon: <IconExpenses /> },
+  { module: "treasury", label: "الخزينة", icon: <IconTreasury /> },
 ];
 
 function Tile({ tile, onOpen }: { tile: TileDef; onOpen: (m: ModuleId) => void }) {
@@ -60,7 +59,6 @@ function Tile({ tile, onOpen }: { tile: TileDef; onOpen: (m: ModuleId) => void }
     <button
       type="button"
       className={`tile ${tile.wide ? "wide" : ""}`}
-      style={{ borderColor: tile.color }}
       onClick={() => onOpen(tile.module)}
     >
       {tile.icon}
@@ -105,10 +103,10 @@ export default function Dashboard({
             <Tile key={t.module} tile={t} onOpen={onOpen} />
           ))}
         </div>
-        <div className="watermark">
-          MAKTAB
-          <small>SOFT</small>
-        </div>
+      </div>
+      <div className="watermark">
+        MAKTAB
+        <small>SOFT</small>
       </div>
       <div className="contact-bar">
         <span>☎ {settings.whatsapp || "+20 10 1234 5678"}</span>

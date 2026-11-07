@@ -5,3 +5,6 @@ node_modules/
 .next/
 *.log
 npm-debug.log*
+
+next-env.d.ts
+*.tsbuildinfo
