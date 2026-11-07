@@ -295,14 +295,9 @@ export default function InvoicePos({
   const dateStr = now
     .toLocaleString("en-GB", { hour12: false })
     .replace(",", "");
-  const lastInv = data.invoices.filter((i) => i.type === kind).at(-1);
 
   function openCustomerForm() {
-    const maxCode = data.customers.reduce((maxCode, c) => {
-      const value = Number(c.code);
-      return Number.isFinite(value) && value > maxCode ? value : maxCode;
-    }, 500);
-    setNewCustomer({ name: "", phone: "", address: "", code: String(maxCode + 1) });
+    setNewCustomer({ name: "", phone: "", address: "", code: "" });
     setCustomerOpen(true);
   }
 
@@ -384,56 +379,24 @@ export default function InvoicePos({
         <div className="pos-title">
           <span>بيانات الفاتورة</span>
           <span className="badge-sale">🛒 {meta.badge}</span>
-          <div className="field">
-            <span>رقم الفاتورة</span>
-            <input className="win-input num inp-code" value={number} readOnly />
+          <div className="num-preview">
+            <div className="field">
+              <span>رقم الفاتورة</span>
+              <input className="win-input num inp-code" value={number} readOnly />
+            </div>
+            <button
+              type="button"
+              className="btn preview-btn"
+              onClick={() => setPreviewOpen(true)}
+            >
+              👁 معاينة
+            </button>
           </div>
-          <button
-            type="button"
-            className="btn preview-btn"
-            onClick={() => setPreviewOpen(true)}
-          >
-            👁 معاينة
-          </button>
         </div>
 
         <div className="pos-top">
-          <div className="pos-row dates-row">
-            <div className="dates-left">
-              <div className="field">
-                <span>التاريخ</span>
-                <input className="win-input inp-date" value={dateStr} readOnly />
-              </div>
-              <label className="check">
-                <input type="checkbox" defaultChecked /> تاريخ آخر فاتورة
-              </label>
-              <span className="muted">
-                {lastInv ? new Date(lastInv.date).toLocaleString("en-GB") : "لا يوجد"}
-              </span>
-            </div>
-
-            <div className="field">
-              <span>نوع الفاتورة</span>
-              <select className="win-input inp-select" defaultValue="عادي">
-                <option>عادي</option>
-                <option>جملة</option>
-              </select>
-            </div>
-            <div className="field">
-              <span>نوع الدفع</span>
-              <select
-                className="win-input inp-select"
-                value={paymentType}
-                onChange={(e) => setPaymentType(e.target.value as "cash" | "credit")}
-              >
-                <option value="cash">نقدي</option>
-                <option value="credit">آجل</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="pos-row">
-            <div className="field party-field">
+          <div className="pos-row head-row">
+            <div className="field party-field party-wide">
               <span>{meta.party === "customer" ? "العميل" : "المورد"}</span>
               <select
                 className="win-input inp-name party-input"
@@ -454,6 +417,32 @@ export default function InvoicePos({
               >
                 ＋
               </button>
+            </div>
+
+            <div className="field">
+              <span>التاريخ</span>
+              <input className="win-input inp-date" value={dateStr} readOnly />
+            </div>
+
+            <div className="type-stack">
+              <div className="field mini-field">
+                <span>نوع الفاتورة</span>
+                <select className="win-input inp-type" defaultValue="عادي">
+                  <option>عادي</option>
+                  <option>جملة</option>
+                </select>
+              </div>
+              <div className="field mini-field">
+                <span>نوع الدفع</span>
+                <select
+                  className="win-input inp-type"
+                  value={paymentType}
+                  onChange={(e) => setPaymentType(e.target.value as "cash" | "credit")}
+                >
+                  <option value="cash">نقدي</option>
+                  <option value="credit">آجل</option>
+                </select>
+              </div>
             </div>
 
             <div className="code-search-box">
@@ -647,7 +636,7 @@ export default function InvoicePos({
           </div>
 
           <div className="box pay-line">
-            <div className="field debt-field">
+            <div className="stat-chip debt-field">
               <span>ديون سابقة</span>
               <b className="money debt">{prevBalance.toFixed(2)}</b>
             </div>
@@ -655,7 +644,7 @@ export default function InvoicePos({
               <span>الإجمالي</span>
               <b>{gross.toFixed(2)}</b>
             </div>
-            <div className="field">
+            <div className="stat-chip pay-field">
               <span>المدفوع</span>
               <input
                 className="win-input num inp-num"
@@ -664,17 +653,17 @@ export default function InvoicePos({
                 disabled={paymentType === "cash"}
               />
             </div>
-            <div className="field">
+            <div className="stat-chip rest-field">
               <span>الباقي</span>
               <b className="money warn">{remaining.toFixed(2)}</b>
             </div>
-            <div className="net-box">
-              المبلغ الصافي
-              <div className="v">{net.toFixed(2)}</div>
-            </div>
-            <div className="field after-field">
+            <div className="stat-chip after-field">
               <span>بعد الحفظ</span>
               <b className="money after">{afterBalance.toFixed(2)}</b>
+            </div>
+            <div className="net-box net-left">
+              <span>المبلغ الصافي</span>
+              <div className="v">{net.toFixed(2)}</div>
             </div>
           </div>
         </div>
@@ -786,7 +775,7 @@ export default function InvoicePos({
                 />
               </label>
               <label className="fl fl-full">
-                <span>كود العميل (تلقائي)</span>
+                <span>كود العميل (تلقائي — يتحدد عند الحفظ)</span>
                 <input
                   className="win-input num code-auto"
                   value={newCustomer.code}

@@ -2720,3 +2720,157 @@ table.data td:last-child { border-inline-end: 0; }
 
 table.data th { border-bottom: 1px solid #c5d0e2; }
 table.data td { border-bottom: 1px solid #e8eef6; }
+
+/* ================= الفاتورة: سطر علوى مضغوط + شيبس الإجماليات ================= */
+.num-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-btn { height: 28px; padding: 0 12px; font-size: 12.5px; }
+.num-preview .inp-code { height: 26px !important; width: 80px !important; }
+
+.pos-title { padding: 4px 10px; font-size: 14px; }
+.badge-sale { padding: 3px 12px; font-size: 13px; border-radius: 8px; }
+
+.pos-top { padding: 6px 8px; }
+.pos-row { gap: 6px 10px; margin-bottom: 6px; }
+
+.head-row { align-items: flex-end; }
+.party-wide { flex: 1 1 320px; }
+.party-wide .party-input { width: 100% !important; max-width: 420px; }
+.party-field .add-party { height: 30px; width: 30px; }
+
+/* خانة التاريخ أصغر */
+.pos .inp-date { height: 28px !important; width: 138px !important; font-size: 12.5px !important; }
+
+/* نوع الفاتورة ونوع الدفع فوق بعض وبنفس العرض */
+.type-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.mini-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.mini-field > span { font-size: 11.5px !important; min-width: 62px; }
+
+.pos .inp-type {
+  height: 24px !important;
+  width: 108px !important;
+  font-size: 12px !important;
+  padding: 0 6px !important;
+}
+
+/* ارتفاع أقل لكل عناصر الفاتورة */
+.pos .win-input,
+.pos .btn,
+.pos .cat-btn { height: 28px; }
+
+.cat-btn { height: 28px; min-width: 74px; font-size: 12px; padding: 0 10px; border-radius: 8px; }
+.cats { min-height: 32px; gap: 6px; }
+
+.pad { padding: 6px; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+.pad-btn {
+  min-height: 38px;
+  padding: 4px 8px;
+  font-size: 12.5px;
+  border-radius: 8px;
+  line-height: 1.15;
+}
+
+.pos-table th { padding: 5px 4px; font-size: 12.5px; }
+.pos-table td { padding: 2px 4px; font-size: 12.5px; line-height: 1.25; }
+.pos-table .qty-input { height: 22px; width: 52px; font-size: 12.5px; }
+.pos-table .delx { width: 18px; height: 18px; line-height: 18px; font-size: 11px; }
+
+.pos-mid { min-height: 200px; gap: 6px; }
+
+/* الإجماليات: كل رقم زى الإجمالى + المبلغ الصافى فى الجزء الفاضى الشمال */
+.pay-line {
+  gap: 8px;
+  padding: 6px 10px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 1 1 148px;
+  padding: 5px 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.stat-chip > span { color: #475569; font-size: 12.5px; }
+.stat-chip .money,
+.stat-chip b { font-size: 19px; font-weight: 800; line-height: 1.1; color: #1e3a8a; }
+
+.stat-chip .inp-num {
+  width: 96px !important;
+  height: 26px !important;
+  font-size: 16px !important;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.stat-chip.debt-field { background: #fef2f2; border-color: #fecaca; }
+.stat-chip.debt-field .money { color: #b91c1c; }
+.stat-chip.rest-field { background: #fffbeb; border-color: #fde68a; }
+.stat-chip.rest-field .money { color: #b45309; }
+.stat-chip.after-field { background: #eff6ff; border-color: #bfdbfe; }
+.stat-chip.after-field .money { color: #1d4ed8; }
+.stat-chip.pay-field { background: #f8fafc; }
+
+.total-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  flex: 0 0 auto;
+}
+
+.total-badge b { font-size: 22px; }
+
+.net-box.net-left {
+  flex: 0 0 auto;
+  min-width: 190px;
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 12px;
+}
+
+.net-box.net-left .v { font-size: 21px; }
+
+.counts-box { padding: 5px 8px; }
+.mini-stat { padding: 2px 8px; font-size: 12px; }
+.mini-stat b { font-size: 14px; }
+
+.fk-bar { padding: 4px 0 2px; gap: 5px; }
+.fk { height: 28px; font-size: 12px; }
+
+/* خانات الأكواد التلقائية */
+.code-auto {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+  font-weight: 800 !important;
+  cursor: not-allowed;
+}
