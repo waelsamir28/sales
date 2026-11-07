@@ -24,12 +24,12 @@ function Panel({
 }) {
   return (
     <div className="screen">
-      <div className="panel" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <div className="panel panel-fill">
         <div className="panel-h">
           <span>{title}</span>
-          <span>{extra}</span>
+          {extra ? <span className="panel-h-extra">{extra}</span> : null}
         </div>
-        {children}
+        <div className="panel-body">{children}</div>
       </div>
     </div>
   );
@@ -925,7 +925,7 @@ export function StatsScreen({ data }: { data: BootstrapData }) {
           <span className="n">{data.installments.reduce((s, i) => s + n(i.remaining), 0).toFixed(0)}</span>
         </div>
       </div>
-      <div className="panel" style={{ marginTop: 8, padding: 8, flex: 1, minHeight: 0 }}>
+      <div className="chart-panel">
         <b>توزيع الأصناف على الأقسام</b>
         <div className="bars">
           {byCat.map((c) => (
