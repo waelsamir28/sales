@@ -24,12 +24,12 @@ const SEED_LOCK_KEY = 0x53414c45;
 type SeedExecutor = Pick<typeof db, "select" | "insert" | "update">;
 
 export const DEFAULT_SETTINGS: Record<string, string> = {
-  store_name: "مكتبة النور",
+  store_name: "مكتبة الجمال",
   store_activity: "أدوات مدرسية ومكتبية وكتب خارجية",
   phone: "+20 10 1234 5678",
   whatsapp: "+20 10 1234 5678",
-  website: "maktabet-elnoor.com",
-  email: "info@maktabet-elnoor.com",
+  website: "maktabet-elgamal.com",
+  email: "info@maktabet-elgamal.com",
   tax_percent: "0",
   user_name: "admin",
   currency: "جنيه",
@@ -47,6 +47,17 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   theme: "navy",
   books_no_return: "1",
   invoice_footer: "الكتب والكراسات والأقلام للبيع فقط — لا تُستبدل ولا تُرد إلا في حال عيب صناعة",
+  // invoice design (used by the preview + printed document)
+  invoice_doc_title: "فاتورة بيع",
+  invoice_paper: "A4",
+  invoice_accent: "#2f54d0",
+  invoice_show_items: "1",
+  invoice_show_qty: "1",
+  invoice_show_type: "1",
+  invoice_show_footer: "1",
+  invoice_logo: "",
+  // cashier behaviour
+  pos_sound: "1",
 };
 
 const CATEGORIES = [
@@ -278,6 +289,16 @@ export async function ensureSeeded() {
 async function ensureSettings(executor: SeedExecutor) {
   const rows = await executor.select().from(settings);
   const have = new Set(rows.map((r) => r.key));
+
+  // rename legacy store name once (existing databases keep their own settings)
+  const legacyName = rows.find((r) => r.key === "store_name" && r.value === "مكتبة النور");
+  if (legacyName) {
+    await executor
+      .update(settings)
+      .set({ value: DEFAULT_SETTINGS.store_name })
+      .where(eq(settings.key, "store_name"));
+  }
+
   const missing = Object.entries(DEFAULT_SETTINGS)
     .filter(([key]) => !have.has(key))
     .map(([key, value]) => ({ key, value }));

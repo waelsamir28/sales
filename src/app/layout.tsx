@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sales Manager | مكتبة النور",
+  title: "Sales Manager | مكتبة الجمال",
   description: "نظام مبيعات لمحلات الأدوات المدرسية والمكتبية والكتب الخارجية",
   manifest: "/manifest.json",
   applicationName: "Sales Manager",

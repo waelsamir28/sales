@@ -110,8 +110,8 @@ export default function Dashboard({
       </div>
       <div className="contact-bar">
         <span>☎ {settings.whatsapp || "+20 10 1234 5678"}</span>
-        <span>🌐 {settings.website || "maktabet-elnoor.com"}</span>
-        <span>✉ {settings.email || "info@maktabet-elnoor.com"}</span>
+        <span>🌐 {settings.website || "maktabet-elgamal.com"}</span>
+        <span>✉ {settings.email || "info@maktabet-elgamal.com"}</span>
       </div>
     </div>
   );

@@ -44,7 +44,7 @@ export default function Login({
         <aside className="login-brand">
           <LogoMark />
           <h1>Sales Manager</h1>
-          <p>مكتبة النور</p>
+          <p>مكتبة الجمال</p>
           <small>أدوات مدرسية · مكتبية · كتب خارجية للبيع</small>
           <ul>
             <li>فاتورة بيع سريع</li>
