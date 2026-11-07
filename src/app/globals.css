@@ -2277,10 +2277,10 @@ input.win-input[data-name="1"],
   margin: 10px 12px 8px;
   padding: 10px 16px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #24324a, #16202f);
-  border: 1px solid #0f172a;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
+  background: linear-gradient(180deg, var(--bar1), var(--bar2));
+  border: 1px solid var(--bar2);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  color: #fff;
   flex: 0 0 auto;
 }
 
@@ -2295,17 +2295,17 @@ input.win-input[data-name="1"],
 .dark-bar-note {
   font-size: 12.5px;
   font-weight: 600;
-  color: #a9b8cd;
+  color: #dbe6ff;
   white-space: nowrap;
 }
 
-.dark-bar .field > span { color: #cfd9e8; }
+.dark-bar .field > span { color: #e6eefc; }
 
 .dark-bar .win-input,
 .dark-bar .field input,
 .dark-bar .field select {
-  background-color: #f8fafc !important;
-  border-color: #334155 !important;
+  background-color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
   color: #0f172a !important;
   font-weight: 700;
 }
@@ -2315,7 +2315,7 @@ input.win-input[data-name="1"],
   border-color: #f6d98a !important;
 }
 
-.dark-bar .color-input { border-color: #334155; }
+.dark-bar .color-input { border-color: rgba(255, 255, 255, 0.55); }
 
 .dark-bar-actions {
   display: flex;
@@ -2351,7 +2351,7 @@ input.win-input[data-name="1"],
 .subtabs-wrap {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   padding: 8px 10px 0;
   background: #f4f7fb;
   border-bottom: 1px solid #e4e9f0;
@@ -2364,15 +2364,6 @@ input.win-input[data-name="1"],
   padding: 0;
   background: transparent;
   border: 0;
-}
-
-.subtabs-bar {
-  height: 12px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #24324a, #16202f);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  margin: 0 auto 6px;
-  width: min(760px, 100%);
 }
 
 .subtabs-wrap .subtab {
@@ -2398,8 +2389,8 @@ table.data.items-table {
 }
 
 table.data.items-table th {
-  background: linear-gradient(180deg, #24324a, #1a2637);
-  color: #eaf1fb;
+  background: linear-gradient(180deg, var(--menu1), var(--menu2));
+  color: #fff;
   border-inline: 1px solid rgba(255, 255, 255, 0.14);
   border-bottom: 1px solid #0f172a;
   padding: 10px 8px;
@@ -2483,3 +2474,29 @@ textarea.win-input {
 }
 
 table.data td.cell-name { text-align: center; }
+
+/* أزرار جوه الشريط الغامق: متباينة مع لون التطبيق */
+.dark-bar .btn {
+  background: rgba(255, 255, 255, 0.94);
+  color: #1e2a3b;
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+
+.dark-bar .btn.primary {
+  background: #ffffff;
+  color: var(--bar2);
+  border-color: #ffffff;
+  font-weight: 800;
+}
+
+.dark-bar .btn.ok,
+.dark-bar .btn.danger {
+  border-color: transparent;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.22);
+}
+
+.dark-bar .badge.warn {
+  background: #fef3c7;
+  color: #92400e;
+}
