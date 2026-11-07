@@ -347,8 +347,7 @@ export default function InvoicePos({
     partyLabel: meta.party === "customer" ? "العميل" : "المورد",
     partyName: party?.name ?? "نقدي",
     partyPhone: party?.phone,
-    warehouseName: data.warehouses.find((w) => w.id === warehouseId)?.name,
-    treasuryName: data.treasuries.find((t) => t.id === treasuryId)?.name,
+    // المخزن والخزينة مش ظاهرين في الفاتورة ولا في الطباعة
     paymentType: paymentType === "cash" ? "نقدي" : "آجل",
     lines: lines.map((l) => ({
       code: l.code,
@@ -389,26 +388,6 @@ export default function InvoicePos({
             <span>رقم الفاتورة</span>
             <input className="win-input num inp-code" value={number} readOnly />
           </div>
-          <div className="field">
-            <span>الخزينة</span>
-            <select
-              className="win-input inp-select"
-              value={treasuryId}
-              onChange={(e) => setTreasuryId(Number(e.target.value))}
-            >
-              {data.treasuries.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <span className="treasury-bal">
-            الرصيد:{" "}
-            {n(
-              data.treasuries.find((t) => t.id === treasuryId)?.balance,
-            ).toFixed(2)}
-          </span>
           <button
             type="button"
             className="btn preview-btn"
@@ -433,20 +412,6 @@ export default function InvoicePos({
               </span>
             </div>
 
-            <div className="field">
-              <span>المخزن</span>
-              <select
-                className="win-input inp-select"
-                value={warehouseId}
-                onChange={(e) => setWarehouseId(Number(e.target.value))}
-              >
-                {data.warehouses.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="field">
               <span>نوع الفاتورة</span>
               <select className="win-input inp-select" defaultValue="عادي">
@@ -682,6 +647,10 @@ export default function InvoicePos({
           </div>
 
           <div className="box pay-line">
+            <div className="field debt-field">
+              <span>ديون سابقة</span>
+              <b className="money debt">{prevBalance.toFixed(2)}</b>
+            </div>
             <div className="total-badge">
               <span>الإجمالي</span>
               <b>{gross.toFixed(2)}</b>
@@ -703,16 +672,9 @@ export default function InvoicePos({
               المبلغ الصافي
               <div className="v">{net.toFixed(2)}</div>
             </div>
-          </div>
-
-          <div className="box side-box">
-            <div className="field">
-              <span>ديون سابقة</span>
-              <b>{prevBalance.toFixed(2)}</b>
-            </div>
-            <div className="field">
+            <div className="field after-field">
               <span>بعد الحفظ</span>
-              <b>{afterBalance.toFixed(2)}</b>
+              <b className="money after">{afterBalance.toFixed(2)}</b>
             </div>
           </div>
         </div>

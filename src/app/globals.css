@@ -466,7 +466,6 @@ button { cursor: pointer; }
   filter: brightness(1.12);
   border-color: var(--tile-border);
 }
-.tile.wide { width: 328px; grid-column: 1 / -1; }
 .tile .label { font-size: 13px; font-weight: 700; text-align: center; line-height: 1.2; white-space: nowrap; }
 .tile .icon { width: 50px; height: 50px; }
 
@@ -483,20 +482,6 @@ button { cursor: pointer; }
 }
 .watermark small { display: block; font-size: 34px; color: rgba(230, 236, 245, 0.78); }
 
-.contact-bar {
-  height: 42px;
-  flex: 0 0 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  background: linear-gradient(180deg, #d0892a, #b56a14);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  z-index: 2;
-}
-.contact-bar span { display: flex; align-items: center; gap: 8px; }
 
 .screen {
   height: 100%;
@@ -1449,7 +1434,7 @@ table.data td.cell-name,
   padding-inline: 10px;
 }
 
-.btn, .tab, .menu-items button, .step-pill, .contact-bar span, .kpi .l {
+.btn, .tab, .menu-items button, .step-pill, .kpi .l {
   white-space: nowrap;
 }
 
@@ -1639,7 +1624,6 @@ table.data td.cell-name,
 @media (max-width: 1000px) {
   .tile-wrap { gap: 12px; padding: 10px; }
   .tile { width: 132px; height: 100px; }
-  .tile.wide { width: 276px; }
   .tile .icon { width: 42px; height: 42px; }
 }
 
@@ -1675,7 +1659,6 @@ table.data td.cell-name,
 
 @media (max-height: 820px) {
   .tile { height: 104px; width: 146px; }
-  .tile.wide { width: 284px; }
   .tile .icon { width: 42px; height: 42px; }
   .dash-head { height: 48px; flex-basis: 48px; }
 }
@@ -2500,3 +2483,240 @@ table.data td.cell-name { text-align: center; }
   background: #fef3c7;
   color: #92400e;
 }
+
+/* ================= الرئيسية: كروت متساوية وملونة بدون حدود ================= */
+:root { --tile-c1: #1c7ed6; }
+
+.tile-wrap {
+  gap: 22px;
+  align-items: safe center;
+}
+
+.tile-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-content: start;
+  flex: 0 0 auto;
+}
+
+.tile {
+  width: 158px;
+  height: 112px;
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.16));
+  background-color: var(--tile-c1);
+  background-blend-mode: soft-light, normal;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease;
+  text-align: center;
+  overflow: hidden;
+}
+
+.tile:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.08);
+  border: 0;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.36);
+}
+
+.tile:focus-visible { outline: 3px solid #ffffffcc; outline-offset: 3px; }
+.tile .label { font-size: 13px; font-weight: 800; text-align: center; line-height: 1.2; white-space: nowrap; }
+.tile .icon { width: 46px; height: 46px; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25)); }
+
+/* الشريط العلوى الغامق */
+.titlebar {
+  background: linear-gradient(180deg, #1f2937, #0f172a) !important;
+  border-bottom: 1px solid #0b1220;
+}
+
+.titlebar-title { font-size: 13px; }
+
+.titlebar-brand {
+  padding-inline-end: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #cbd5e1;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* رأس الرئيسية */
+.dash-head {
+  background: linear-gradient(180deg, #1f2937, #111827);
+}
+
+.dash-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-hi {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+/* شاشة الدخول بالاسم */
+.login-welcome {
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 13.5px;
+}
+
+.login-form .win-input.name-input { text-align: center; font-weight: 800; font-size: 15px; }
+
+.boot-splash {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0f172a;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+/* شاشة النسخ الاحتياطى */
+.backup-note {
+  margin: 0 12px 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #78350f;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .tile { width: 140px; height: 104px; }
+  .tile-wrap { gap: 14px; }
+}
+
+/* ================= الفاتورة: شكل مسطّر ونظيف + الديون جنب الإجمالى ================= */
+.pv-party {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 0;
+  color: #1e293b;
+}
+
+.pv-table-wrap {
+  border: 1px solid #cbd5e1;
+  border-radius: 0;
+}
+
+.pv-table th,
+.pv-table td {
+  border: 1px solid #dbe3ee;
+  border-radius: 0;
+}
+
+.pv-summary > div {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0;
+}
+
+.pv-summary > .pv-debt {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.pv-summary > .pv-debt b { color: #b91c1c; }
+
+.pv-summary > .pv-after {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.pv-net {
+  border-radius: 0;
+  border: 1px solid #0f172a;
+}
+
+/* سطر الإجمالى فى شاشة الفاتورة: ديون سابقة + الإجمالى + المدفوع + الباقى + الصافى */
+.pay-line {
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.pay-line .debt-field {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0;
+  padding: 6px 12px;
+}
+
+.pay-line .debt-field .money.debt { color: #b91c1c; font-size: 17px; }
+
+.pay-line .after-field {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0;
+  padding: 6px 12px;
+}
+
+.pay-line .after-field .money.after { color: #1d4ed8; font-size: 17px; }
+
+.total-badge,
+.net-box,
+.mini-stat,
+.box {
+  border-radius: 0;
+}
+
+/* شاشة الفاتورة كلها مسطّرة (زوايا قائمة) */
+.pos-title,
+.pos-top,
+.pos-mid,
+.pos-bottom,
+.pos-table,
+.pad,
+.pad-btn,
+.fk,
+.qty-input,
+.pos .win-input,
+.pos .btn,
+.pos .field,
+.modal-card,
+.floating-card {
+  border-radius: 0 !important;
+}
+
+.pos .fk { border-radius: 0 !important; }
+
+/* حدود أوضح للجدول المسطّر */
+.pos-table th,
+.pos-table td {
+  border: 1px solid #d7dfea;
+}
+
+/* ================= جداول مسطّرة فى كل الشاشات (خطوط فاصلة بين كل خلية) ================= */
+table.data th,
+table.data td {
+  border-inline: 1px solid #e2e8f0;
+}
+
+table.data th:first-child,
+table.data td:first-child { border-inline-start: 0; }
+
+table.data th:last-child,
+table.data td:last-child { border-inline-end: 0; }
+
+table.data th { border-bottom: 1px solid #c5d0e2; }
+table.data td { border-bottom: 1px solid #e8eef6; }

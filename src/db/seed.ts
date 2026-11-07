@@ -62,16 +62,16 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
 };
 
 const CATEGORIES = [
-  { name: "أقلام جاف ورصاص", color: "#2563eb", sortOrder: 1 },
-  { name: "كراسات وكشاكيل", color: "#0ea5e9", sortOrder: 2 },
-  { name: "كتب خارجية", color: "#7c3aed", sortOrder: 3 },
-  { name: "أدوات هندسية", color: "#059669", sortOrder: 4 },
-  { name: "ملفات وحوافظ", color: "#d97706", sortOrder: 5 },
-  { name: "ألوان ورسوم", color: "#db2777", sortOrder: 6 },
-  { name: "ورق تصوير", color: "#64748b", sortOrder: 7 },
-  { name: "أدوات مكتبية", color: "#0f766e", sortOrder: 8 },
-  { name: "حقائب ومقلمات", color: "#b45309", sortOrder: 9 },
-  { name: "مستلزمات مدرسية", color: "#1d4ed8", sortOrder: 10 },
+  { name: "أقلام جاف ورصاص", color: "#1d4ed8", sortOrder: 1 },
+  { name: "كراسات وكشاكيل", color: "#2563eb", sortOrder: 2 },
+  { name: "كتب خارجية", color: "#3b82f6", sortOrder: 3 },
+  { name: "أدوات هندسية", color: "#1e40af", sortOrder: 4 },
+  { name: "ملفات وحوافظ", color: "#4f7df3", sortOrder: 5 },
+  { name: "ألوان ورسوم", color: "#0f766e", sortOrder: 6 },
+  { name: "ورق تصوير", color: "#0ea5e9", sortOrder: 7 },
+  { name: "أدوات مكتبية", color: "#334155", sortOrder: 8 },
+  { name: "حقائب ومقلمات", color: "#6366f1", sortOrder: 9 },
+  { name: "مستلزمات مدرسية", color: "#1f4fc0", sortOrder: 10 },
 ];
 
 type SeedItem = {
