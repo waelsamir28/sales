@@ -2163,9 +2163,195 @@ export function renderModule(
           <ProfitsView data={data} />
         </Panel>
       );
+    case "backup":
+      return (
+        <BackupScreen data={data} reload={reload} toast={toast} subTab={opts?.sub} onSubTab={opts?.onSub} />
+      );
     default:
       return null;
   }
+}
+
+/* ================= النسخ الاحتياطى والصيانة ================= */
+export function BackupScreen({
+  data,
+  reload,
+  toast,
+  subTab,
+  onSubTab,
+}: {
+  data: BootstrapData;
+  reload: () => Promise<void>;
+  toast: (k: "ok" | "err" | "info", t: string) => void;
+  subTab?: string;
+  onSubTab?: (id: string) => void;
+}) {
+  const [subLocal, setSubLocal] = useState("backup");
+  const sub = subTab ?? subLocal;
+  const setSub = (id: string) => {
+    setSubLocal(id);
+    onSubTab?.(id);
+  };
+  const [busy, setBusy] = useState(false);
+  const [lastBackup, setLastBackup] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem("sales.lastBackup") || "";
+  });
+
+  function fileName() {
+    const d = new Date();
+    const p = (x: number) => String(x).padStart(2, "0");
+    return `gamal-backup-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
+  }
+
+  async function makeBackup() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/bootstrap", { cache: "no-store" });
+      const json = (await res.json()) as { ok: boolean; data?: BootstrapData };
+      if (!json.ok || !json.data) {
+        toast("err", "تعذر قراءة البيانات");
+        return;
+      }
+      const name = fileName();
+      const blob = new Blob([JSON.stringify({ app: "Sales Manager", store: json.data.settings.store_name, at: new Date().toISOString(), data: json.data }, null, 2)], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+      const stamp = new Date().toLocaleString("ar-EG");
+      window.localStorage.setItem("sales.lastBackup", stamp);
+      setLastBackup(stamp);
+      toast("ok", `تم إنشاء النسخة الاحتياطية: ${name}`);
+    } catch {
+      toast("err", "تعذر إنشاء النسخة الاحتياطية");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function printData() {
+    window.print();
+  }
+
+  const stats = [
+    { label: "الأصناف", value: data.items.length },
+    { label: "المجموعات", value: data.categories.length },
+    { label: "العملاء", value: data.customers.length },
+    { label: "الموردين", value: data.suppliers.length },
+    { label: "الفواتير", value: data.invoices.length },
+    { label: "الموظفين", value: data.employees.length },
+  ];
+
+  return (
+    <Panel title="النسخ الاحتياطى والصيانة">
+      <SubTabs
+        items={[
+          { id: "backup", label: "نسخ احتياطى" },
+          { id: "maintenance", label: "صيانة وأدوات" },
+          { id: "about", label: "عن البرنامج" },
+        ]}
+        value={sub}
+        onChange={setSub}
+      />
+
+      {sub === "backup" ? (
+        <>
+          <div className="dark-bar">
+            <span className="dark-bar-title">نسخة احتياطية كاملة للبيانات</span>
+            <span className="dark-bar-note">ملف JSON فيه كل الأصناف والعملاء والفواتير والإعدادات</span>
+            <button type="button" className="btn primary" disabled={busy} onClick={() => void makeBackup()}>
+              {busy ? "جارى التحضير..." : "⬇ تنزيل النسخة الاحتياطية"}
+            </button>
+          </div>
+          <div className="stat-strip">
+            <div>
+              <span>آخر نسخة احتياطية</span>
+              <b>{lastBackup || "لا يوجد"}</b>
+            </div>
+            <div>
+              <span>حجم البيانات</span>
+              <b>{data.items.length + data.invoices.length + data.customers.length} سجل</b>
+            </div>
+            <div>
+              <span>اسم الملف</span>
+              <b>gamal-backup-*.json</b>
+            </div>
+          </div>
+          <div className="backup-note">
+            <b>ملاحظة:</b> النسخة بتتحفظ على جهازك كملف — احتفظ بيها على فلاشة أو على Drive.
+            الاستعادة من ملف مش متاحة من الشاشة (بتتعمل من مسؤول النظام) لتجنب الكتابة بالغلط على البيانات.
+          </div>
+        </>
+      ) : null}
+
+      {sub === "maintenance" ? (
+        <>
+          <div className="dark-bar">
+            <span className="dark-bar-title">صيانة وأدوات</span>
+            <span className="dark-bar-note">تنظيف البيانات المؤقتة وطباعة ملخص الحالة</span>
+            <button type="button" className="btn" onClick={printData}>
+              🖨 طباعة ملخص الحالة
+            </button>
+            <button
+              type="button"
+              className="btn ok"
+              onClick={() => void reload().then(() => toast("ok", "تم تحديث البيانات"))}
+            >
+              ↻ تحديث البيانات
+            </button>
+            <button
+              type="button"
+              className="btn danger"
+              onClick={() => {
+                if (typeof window === "undefined") return;
+                window.localStorage.removeItem("sales.lastBackup");
+                setLastBackup("");
+                toast("ok", "تم تنظيف بيانات الجلسة المؤقتة");
+              }}
+            >
+              🧹 تنظيف المؤقت
+            </button>
+          </div>
+          <div className="stat-strip">
+            {stats.map((st) => (
+              <div key={st.label}>
+                <span>{st.label}</span>
+                <b>{st.value}</b>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {sub === "about" ? (
+        <>
+          <div className="dark-bar">
+            <span className="dark-bar-title">Sales Manager</span>
+            <span className="dark-bar-note">نظام إدارة مبيعات ومخازن</span>
+          </div>
+          <div className="stat-strip">
+            <div>
+              <span>اسم المحل</span>
+              <b>{data.settings.store_name || "مكتبة الجمال"}</b>
+            </div>
+            <div>
+              <span>المستخدم الحالى</span>
+              <b>{data.employees[0]?.name || "—"}</b>
+            </div>
+            <div>
+              <span>الثيم</span>
+              <b>{data.settings.theme || "navy"}</b>
+            </div>
+          </div>
+        </>
+      ) : null}
+    </Panel>
+  );
 }
 
 export const MODULE_TITLES: Record<ModuleId, string> = {
@@ -2194,6 +2380,7 @@ export const MODULE_TITLES: Record<ModuleId, string> = {
   installments: "التقسيط",
   statement: "كشف حساب",
   profits: "الأرباح",
+  backup: "النسخ الاحتياطى والصيانة",
 };
 
 

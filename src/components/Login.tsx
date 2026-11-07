@@ -3,7 +3,7 @@
 import { LogoMark } from "@/components/icons";
 import { useState, type FormEvent } from "react";
 
-export type SessionUser = { username: string; displayName: string; role: string };
+export type SessionUser = { name: string };
 
 export default function Login({
   onSuccess,
@@ -12,30 +12,21 @@ export default function Login({
   onSuccess: (user: SessionUser) => void;
   theme: string;
 }) {
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [welcome, setWelcome] = useState("");
 
-  async function submit(e: FormEvent) {
+  function submit(e: FormEvent) {
     e.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const json = (await res.json()) as { ok: boolean; error?: string; user?: SessionUser };
-      if (!json.ok || !json.user) {
-        setError(json.error || "تعذر الدخول");
-        return;
-      }
-      onSuccess(json.user);
-    } finally {
-      setBusy(false);
+    const clean = name.trim();
+    if (!clean) {
+      setError("اكتب اسمك الأول عشان تدخل");
+      setWelcome("");
+      return;
     }
+    setError("");
+    setWelcome(`أهلاً ${clean} 👋 — جارى فتح البرنامج...`);
+    window.setTimeout(() => onSuccess({ name: clean }), 900);
   }
 
   return (
@@ -43,42 +34,39 @@ export default function Login({
       <div className="login-card">
         <aside className="login-brand">
           <LogoMark />
-          <h1>Sales Manager</h1>
-          <p>مكتبة الجمال</p>
+          <h1>مكتبة الجمال</h1>
+          <p>للأدوات المدرسية والمكتبية</p>
           <small>أدوات مدرسية · مكتبية · كتب خارجية للبيع</small>
           <ul>
             <li>فاتورة بيع سريع</li>
             <li>تقسيط المدارس</li>
             <li>كشف حساب وأرباح</li>
+            <li>نسخ احتياطى للبيانات</li>
           </ul>
         </aside>
-        <form className="login-form" onSubmit={(e) => void submit(e)}>
-          <h2>تسجيل الدخول</h2>
-          <p>أدخل بيانات المستخدم لفتح وردية الكاشير</p>
+        <form className="login-form" onSubmit={submit}>
+          <h2>أهلاً بيك</h2>
+          <p>اكتب اسمك وادخل على طول — مفيش كلمة مرور</p>
           <label>
-            <span>اسم المستخدم</span>
+            <span>الاسم</span>
             <input
-              className="win-input"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-            />
-          </label>
-          <label>
-            <span>كلمة المرور</span>
-            <input
-              className="win-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              className="win-input name-input"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError("");
+              }}
+              placeholder="مثال: وليد"
+              autoFocus
+              autoComplete="name"
             />
           </label>
           {error ? <div className="login-err">{error}</div> : null}
-          <button type="submit" className="btn primary" disabled={busy}>
-            {busy ? "جارى التحقق..." : "دخول للنظام"}
+          {welcome ? <div className="login-welcome">{welcome}</div> : null}
+          <button type="submit" className="btn primary">
+            دخول
           </button>
-          <div className="login-hint">المستخدم الافتراضي: admin — كلمة المرور: 1234</div>
+          <div className="login-hint">الاسم بيظهر فى شريط الحالة ويستخدم فى الترحيب</div>
         </form>
       </div>
     </div>

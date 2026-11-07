@@ -207,7 +207,8 @@ export type ModuleId =
   | "setup"
   | "installments"
   | "statement"
-  | "profits";
+  | "profits"
+  | "backup";
 
 export type Tab = {
   id: string;

@@ -2,13 +2,17 @@
 
 import Dashboard from "@/components/Dashboard";
 import InvoicePos from "@/components/InvoicePos";
+import Login, { type SessionUser } from "@/components/Login";
 import { MODULE_TITLES, renderModule } from "@/components/Screens";
 import type { BootstrapData, ModuleId, Tab, Toast } from "@/lib/types";
 import { useCallback, useEffect, useState } from "react";
 
 const HOME: Tab = { id: "home", module: "home", title: "الرئيسية" };
+const USER_KEY = "sales.user";
 
 export default function App() {
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [booted, setBooted] = useState(false);
   const [data, setData] = useState<BootstrapData | null>(null);
   const [tabs, setTabs] = useState<Tab[]>([HOME]);
   const [active, setActive] = useState("home");
@@ -38,10 +42,36 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(USER_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as SessionUser;
+        // استرجاع جلسة الاسم المحفوظة (مرة واحدة عند الفتح)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (parsed?.name) setUser(parsed);
+      }
+    } catch {
+      /* ignore */
+    }
+    setBooted(true);
+  }, []);
+
+  useEffect(() => {
     void reload();
     const t = window.setInterval(() => setNow(new Date().toLocaleString("ar-EG")), 1000);
     return () => window.clearInterval(t);
   }, [reload]);
+
+  function signIn(next: SessionUser) {
+    setUser(next);
+    showToast("ok", `أهلاً ${next.name} 👋 — نورت مكتبة الجمال`);
+    try {
+      window.localStorage.setItem(USER_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+    setActive("home");
+  }
 
   function openTab(tab: Tab) {
     setTabs((prev) => (prev.some((t) => t.id === tab.id) ? prev : [...prev, tab]));
@@ -65,6 +95,17 @@ export default function App() {
     }
     const tab: Tab = { id: `${module}-${Date.now()}`, module, title: MODULE_TITLES[module] };
     openTab(tab);
+  }
+
+  function openBackupTab(view: "backup" | "maintenance" = "backup") {
+    setMenu(null);
+    const tab: Tab = { id: "backup-main", module: "backup", title: "النسخ الاحتياطى والصيانة", sub: view };
+    setTabs((prev) =>
+      prev.some((t) => t.id === tab.id)
+        ? prev.map((t) => (t.id === tab.id ? { ...t, sub: view } : t))
+        : [...prev, tab],
+    );
+    setActive(tab.id);
   }
 
   function openItemsTab(sub: string) {
@@ -93,11 +134,7 @@ export default function App() {
   }
 
   function setCurrentSub(sub: string) {
-    setTabs((prev) =>
-      prev.map((t) =>
-        t.module === "items" ? { ...t, sub } : t,
-      ),
-    );
+    setTabs((prev) => prev.map((t) => (t.id === active ? { ...t, sub } : t)));
   }
 
   const current = tabs.find((t) => t.id === active) ?? HOME;
@@ -114,18 +151,20 @@ export default function App() {
             ? "purchase_return"
             : null;
 
+  if (!booted) return <div className="boot-splash">جارى التحميل...</div>;
+
+  if (!user) {
+    return <Login theme={theme} onSuccess={signIn} />;
+  }
+
   return (
     <div className="desktop" data-theme={theme} onClick={() => setMenu(null)}>
       <div className="titlebar">
         <div className="titlebar-title">
           <span>📚</span>
-          <span>Sales Manager — مكتبة الجمال للأدوات المدرسية والمكتبية</span>
+          <span>مكتبة الجمال للأدوات المدرسية والمكتبية</span>
         </div>
-        <div className="win-btns">
-          <span>_</span>
-          <span>□</span>
-          <span className="close">✕</span>
-        </div>
+        <div className="titlebar-brand">Sales Manager</div>
       </div>
 
       <div className="menubar">
@@ -136,7 +175,7 @@ export default function App() {
             onToggle={() => setMenu(menu === "file" ? null : "file")}
             items={[
               { label: "الرئيسية", action: () => openModule("home") },
-              { label: "معالج التثبيت والإعداد", action: () => openModule("setup") },
+              { label: "نسخ احتياطى", action: () => openBackupTab() },
               { label: "الإعدادات", action: () => openModule("settings") },
               { label: "بيان الأسعار", action: () => openModule("prices") },
             ]}
@@ -198,7 +237,7 @@ export default function App() {
           <button type="button" onClick={() => openModule("employees")}>
             الموظفين
           </button>
-          <button type="button" onClick={() => openModule("attendance")}>
+          <button type="button" onClick={() => openBackupTab("maintenance")}>
             الصيانه
           </button>
           <button type="button" onClick={() => openModule("reports")}>
@@ -249,7 +288,7 @@ export default function App() {
           </div>
         )}
         {data && current.module === "home" && (
-          <Dashboard onOpen={openModule} settings={data.settings} />
+          <Dashboard onOpen={openModule} settings={data.settings} userName={user?.name} />
         )}
         {data && invoiceKind && (
           <InvoicePos kind={invoiceKind} data={data} onSaved={reload} onToast={showToast} />
@@ -263,13 +302,10 @@ export default function App() {
 
       <div className="statusbar">
         <span>
-          المستخدم: <b>زائر</b>
+          المستخدم: <b>{user?.name || "—"}</b>
         </span>
         <span>التاريخ: {now}</span>
-        <span>
-          ترخيص البرنامج: <b>365</b> أيام
-        </span>
-        <span>Copyright © Maktab Soft 2026 — مكتبة الجمال</span>
+        <span>{data?.settings.store_name || "مكتبة الجمال"}</span>
       </div>
     </div>
   );
