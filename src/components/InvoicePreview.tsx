@@ -201,6 +201,7 @@ export default function InvoicePreview({
             {data.notes ? (
               <p className="pv-notes">ملاحظات: {data.notes}</p>
             ) : null}
+            {data.notes ? <p className="pv-notes">ملاحظات: {data.notes}</p> : null}
             <div className="pv-foot">
               <span>{data.footer || ""}</span>
               <span>{data.storeName}</span>

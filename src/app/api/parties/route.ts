@@ -24,7 +24,6 @@ export async function POST(request: Request) {
           name: String(body.name ?? ""),
           phone: String(body.phone ?? ""),
           address: String(body.address ?? ""),
-          discountPercent: money(body.discountPercent),
           balance: money(body.balance),
         })
         .returning();
@@ -75,7 +74,6 @@ export async function PUT(request: Request) {
           name: String(body.name ?? ""),
           phone: String(body.phone ?? ""),
           address: String(body.address ?? ""),
-          discountPercent: money(body.discountPercent),
           balance: money(body.balance),
         })
         .where(eq(customers.id, id))

@@ -250,7 +250,6 @@ export function PartyScreen({
     name: "",
     phone: "",
     address: "",
-    discountPercent: "0",
     balance: "0",
     jobTitle: "موظف",
     salary: "0",
@@ -337,7 +336,6 @@ export function PartyScreen({
               name: "",
               phone: "",
               address: "",
-              discountPercent: "0",
               balance: "0",
               jobTitle: "موظف",
               salary: "0",
@@ -358,7 +356,7 @@ export function PartyScreen({
         )}
         <label className="fl fl-name">
           <span>الاسم</span>
-          <input className="win-input" value={String(form.name)} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <input className="win-input name-input" value={String(form.name)} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
         <label className="fl fl-phone">
           <span>الهاتف</span>
@@ -368,16 +366,6 @@ export function PartyScreen({
           <label className="fl fl-address">
             <span>العنوان</span>
             <input className="win-input" value={String(form.address)} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          </label>
-        )}
-        {kind === "customers" && (
-          <label className="fl fl-num">
-            <span>خصم %</span>
-            <input
-              className="win-input num"
-              value={String(form.discountPercent)}
-              onChange={(e) => setForm({ ...form, discountPercent: e.target.value })}
-            />
           </label>
         )}
         {kind !== "employees" && (
@@ -411,7 +399,6 @@ export function PartyScreen({
               <th>الاسم</th>
               <th>هاتف</th>
               {kind !== "employees" && <th>عنوان</th>}
-              {kind === "customers" && <th>خصم</th>}
               {kind !== "employees" && <th>رصيد</th>}
               {kind === "employees" && <th>وظيفة</th>}
               {kind === "employees" && <th>راتب</th>}
@@ -425,7 +412,6 @@ export function PartyScreen({
                 <td className="cell-name">{r.name}</td>
                 <td>{r.phone}</td>
                 {"address" in r && kind !== "employees" && <td>{r.address}</td>}
-                {kind === "customers" && "discountPercent" in r ? <td>{String(r.discountPercent)}</td> : null}
                 {kind !== "employees" && "balance" in r ? <td>{n(r.balance).toFixed(2)}</td> : null}
                 {kind === "employees" && "jobTitle" in r ? <td>{String(r.jobTitle)}</td> : null}
                 {kind === "employees" && "salary" in r ? <td>{n(r.salary).toFixed(2)}</td> : null}
@@ -511,7 +497,7 @@ export function CashScreen({
         </label>
         <label className="fl fl-name">
           <span>الاسم</span>
-          <select className="win-input" value={partyId} onChange={(e) => setPartyId(Number(e.target.value))}>
+          <select className="win-input name-input" value={partyId} onChange={(e) => setPartyId(Number(e.target.value))}>
             <option value={0}>—</option>
             {parties.map((p) => (
               <option key={p.id} value={p.id}>
@@ -725,7 +711,7 @@ export function AttendanceScreen({
       <div className="toolbar">
         <div className="field">
           <span>الموظف</span>
-          <select className="win-input inp-name" value={employeeId} onChange={(e) => setEmployeeId(Number(e.target.value))}>
+          <select className="win-input inp-name name-input" value={employeeId} onChange={(e) => setEmployeeId(Number(e.target.value))}>
             {data.employees.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.name} — {e.jobTitle}
@@ -1136,7 +1122,7 @@ export function SettingsScreen({
     total: demoTotal,
     paid: demoTotal,
     remaining: 0,
-    notes: "معاينة تجريبية — يمكنك تغيير التصميم والألوان من هنا ثم الحفظ",
+    notes: form.invoice_notes || "",
     footer: form.invoice_footer,
     currency,
     accent: form.invoice_accent,
