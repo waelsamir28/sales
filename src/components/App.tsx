@@ -43,10 +43,19 @@ export default function App() {
     return () => window.clearInterval(t);
   }, [reload]);
 
+  function openTab(tab: Tab) {
+    setTabs((prev) => (prev.some((t) => t.id === tab.id) ? prev : [...prev, tab]));
+    setActive(tab.id);
+  }
+
   function openModule(module: ModuleId) {
     setMenu(null);
     if (module === "home") {
       setActive("home");
+      return;
+    }
+    if (module === "items") {
+      openItemsTab("list");
       return;
     }
     const existing = tabs.find((t) => t.module === module);
@@ -55,7 +64,22 @@ export default function App() {
       return;
     }
     const tab: Tab = { id: `${module}-${Date.now()}`, module, title: MODULE_TITLES[module] };
-    setTabs((prev) => [...prev, tab]);
+    openTab(tab);
+  }
+
+  function openItemsTab(sub: string) {
+    setMenu(null);
+    const tab: Tab = {
+      id: "items-main",
+      module: "items",
+      title: MODULE_TITLES.items,
+      sub,
+    };
+    setTabs((prev) =>
+      prev.some((t) => t.id === tab.id)
+        ? prev.map((t) => (t.id === tab.id ? { ...t, sub } : t))
+        : [...prev, tab],
+    );
     setActive(tab.id);
   }
 
@@ -66,6 +90,14 @@ export default function App() {
       if (active === id) setActive(next[next.length - 1]?.id ?? "home");
       return next;
     });
+  }
+
+  function setCurrentSub(sub: string) {
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.module === "items" ? { ...t, sub } : t,
+      ),
+    );
   }
 
   const current = tabs.find((t) => t.id === active) ?? HOME;
@@ -118,6 +150,18 @@ export default function App() {
           <button type="button" onClick={() => openModule("warehouses")}>
             المخازن
           </button>
+          <Menu
+            label="الأصناف والمجموعات"
+            open={menu === "items"}
+            onToggle={() => setMenu(menu === "items" ? null : "items")}
+            items={[
+              { label: "الأصناف", action: () => openItemsTab("list") },
+              { label: "المجموعات · البنود", action: () => openItemsTab("groups") },
+              { label: "إضافة سريعة", action: () => openItemsTab("quick") },
+              { label: "أرباح الأصناف", action: () => openItemsTab("profit") },
+              { label: "تحت الحد الأدنى", action: () => openItemsTab("low") },
+            ]}
+          />
           <Menu
             label="المشتريات"
             open={menu === "buy"}
@@ -211,7 +255,10 @@ export default function App() {
           <InvoicePos kind={invoiceKind} data={data} onSaved={reload} onToast={showToast} />
         )}
         {data && current.module !== "home" && !invoiceKind &&
-          renderModule(current.module, data, reload, showToast)}
+          renderModule(current.module, data, reload, showToast, {
+            sub: current.sub,
+            onSub: setCurrentSub,
+          })}
       </div>
 
       <div className="statusbar">

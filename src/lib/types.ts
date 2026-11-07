@@ -213,6 +213,8 @@ export type Tab = {
   id: string;
   module: ModuleId;
   title: string;
+  /** الشاشة الفرعية المفتوحة (تُستخدم لفتح الأصناف / المجموعات من الشريط العلوى) */
+  sub?: string;
 };
 
 export type CartLine = {

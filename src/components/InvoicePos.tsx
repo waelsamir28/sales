@@ -63,6 +63,8 @@ export default function InvoicePos({
 }) {
   const meta = META[kind];
   const codeRef = useRef<HTMLInputElement>(null);
+  const qtyRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+  const qtyFocusKey = useRef<string | null>(null);
   const [lines, setLines] = useState<CartLine[]>([]);
   const [catId, setCatId] = useState<number | 0>(0);
   const [query, setQuery] = useState("");
@@ -129,6 +131,20 @@ export default function InvoicePos({
       ? round2(prevBalance + (kind === "sale" ? remaining : -remaining))
       : round2(prevBalance + (kind === "purchase" ? remaining : -remaining));
 
+  function focusQty(key: string) {
+    qtyFocusKey.current = key;
+  }
+
+  useEffect(() => {
+    const key = qtyFocusKey.current;
+    if (!key) return;
+    qtyFocusKey.current = null;
+    const el = qtyRefs.current.get(key);
+    if (!el) return;
+    el.focus();
+    el.select();
+  }, [lines]);
+
   function addItem(item: Item, qty = 1) {
     if (
       booksLocked &&
@@ -142,9 +158,12 @@ export default function InvoicePos({
     setLastItem(
       `${item.name} | الكمية : ${qty} | السعر : ${n(item.price).toFixed(2)}`,
     );
+    const newKey = `${item.id}-${Date.now()}`;
+    focusQty(newKey);
     setLines((prev) => {
       const found = prev.find((l) => l.itemId === item.id);
       if (found) {
+        focusQty(found.key);
         return prev.map((l) =>
           l.itemId === item.id ? { ...l, qty: round2(l.qty + qty) } : l,
         );
@@ -152,7 +171,7 @@ export default function InvoicePos({
       return [
         ...prev,
         {
-          key: `${item.id}-${Date.now()}`,
+          key: newKey,
           itemId: item.id,
           code: item.code,
           name: item.name,
@@ -187,7 +206,6 @@ export default function InvoicePos({
     }
     addItem(item);
     setCode("");
-    codeRef.current?.focus();
   }
 
   function reset() {
@@ -589,6 +607,10 @@ export default function InvoicePos({
                         <td>{lineSub.toFixed(2)}</td>
                         <td>
                           <input
+                            ref={(el) => {
+                              if (el) qtyRefs.current.set(l.key, el);
+                              else qtyRefs.current.delete(l.key);
+                            }}
                             className="qty-input"
                             value={l.qty}
                             onChange={(e) =>
@@ -600,6 +622,12 @@ export default function InvoicePos({
                                 ),
                               )
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                codeRef.current?.focus();
+                              }
+                            }}
                           />
                         </td>
                         <td>
