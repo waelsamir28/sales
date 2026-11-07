@@ -111,7 +111,7 @@ export function StatementView({
       <div className="form-row">
         <label className="fl fl-name">
           <span>{kind === "customer" ? "العميل" : "المورد"}</span>
-          <select className="win-input" value={partyId} onChange={(e) => setPartyId(Number(e.target.value))}>
+          <select className="win-input name-input" value={partyId} onChange={(e) => setPartyId(Number(e.target.value))}>
             {parties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -221,7 +221,7 @@ export function InstallmentsView({
       <div className="form-row">
         <label className="fl fl-name">
           <span>العميل</span>
-          <select className="win-input" value={customerId} onChange={(e) => setCustomerId(Number(e.target.value))}>
+          <select className="win-input name-input" value={customerId} onChange={(e) => setCustomerId(Number(e.target.value))}>
             {data.customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -231,7 +231,7 @@ export function InstallmentsView({
         </label>
         <label className="fl fl-item">
           <span>بيان العقد</span>
-          <input className="win-input" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input className="win-input name-input" value={title} onChange={(e) => setTitle(e.target.value)} />
         </label>
         <label className="fl fl-num">
           <span>الإجمالي</span>

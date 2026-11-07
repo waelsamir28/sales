@@ -75,11 +75,12 @@ export default function InvoicePos({
   const [warehouseId, setWarehouseId] = useState(data.warehouses[0]?.id ?? 1);
   const [treasuryId, setTreasuryId] = useState(data.treasuries[0]?.id ?? 1);
   const [paymentType, setPaymentType] = useState<"cash" | "credit">("cash");
-  const [delivery, setDelivery] = useState(0);
   const [paid, setPaid] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const playPick = usePickSound(data.settings.pos_sound !== "0");
-  const [notes, setNotes] = useState("");
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", address: "", code: "" });
+  const [savingCustomer, setSavingCustomer] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastItem, setLastItem] = useState("");
   const number = nextPreviewNumber(data.invoices, kind);
@@ -119,7 +120,7 @@ export default function InvoicePos({
 
   const subtotal = round2(lines.reduce((s, l) => s + l.price * l.qty, 0));
   const gross = subtotal;
-  const net = round2(Math.max(gross + delivery, 0));
+  const net = round2(Math.max(gross, 0));
   const qtyTotal = round2(lines.reduce((s, l) => s + l.qty, 0));
   const effectivePaid = paymentType === "cash" ? net : paid;
   const remaining = round2(Math.max(net - effectivePaid, 0));
@@ -191,9 +192,7 @@ export default function InvoicePos({
 
   function reset() {
     setLines([]);
-    setDelivery(0);
     setPaid(0);
-    setNotes("");
     setLastItem("");
     setQuery("");
     setCode("");
@@ -218,10 +217,9 @@ export default function InvoicePos({
           warehouseId,
           treasuryId,
           paymentType,
-          discount: 0,
-          delivery,
+          net,
           paid: effectivePaid,
-          notes,
+          notes: "",
           status: "saved",
           lines: lines.map((l) => ({
             itemId: l.itemId,
@@ -281,6 +279,43 @@ export default function InvoicePos({
     .replace(",", "");
   const lastInv = data.invoices.filter((i) => i.type === kind).at(-1);
 
+  function openCustomerForm() {
+    const maxCode = data.customers.reduce((maxCode, c) => {
+      const value = Number(c.code);
+      return Number.isFinite(value) && value > maxCode ? value : maxCode;
+    }, 500);
+    setNewCustomer({ name: "", phone: "", address: "", code: String(maxCode + 1) });
+    setCustomerOpen(true);
+  }
+
+  async function saveCustomer() {
+    const name = newCustomer.name.trim();
+    if (!name) {
+      onToast("err", "اكتب اسم العميل أولاً");
+      return;
+    }
+    setSavingCustomer(true);
+    try {
+      const res = await fetch("/api/parties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "customers", ...newCustomer, balance: 0 }),
+      });
+      const json = (await res.json()) as { ok: boolean; error?: string; row?: Customer };
+      if (!json.ok || !json.row) {
+        onToast("err", json.error || "تعذر إضافة العميل");
+        return;
+      }
+      onToast("ok", `تمت إضافة ${json.row.name}`);
+      await onSaved();
+      setPartyId(json.row.id);
+      setCustomerOpen(false);
+      setNewCustomer({ name: "", phone: "", address: "", code: "" });
+    } finally {
+      setSavingCustomer(false);
+    }
+  }
+
   const printData = {
     storeName: data.settings.store_name || storeNameFallback,
     storeActivity: data.settings.store_activity,
@@ -308,13 +343,13 @@ export default function InvoicePos({
     itemCount: lines.length,
     qtyTotal,
     subtotal,
-    delivery,
+    delivery: 0,
     total: net,
     paid: effectivePaid,
     remaining,
     previousBalance: prevBalance,
     balanceAfter: afterBalance,
-    notes,
+    notes: data.settings.invoice_notes || "",
     footer: data.settings.invoice_footer,
     currency: data.settings.currency,
     accent: data.settings.invoice_accent,
@@ -366,15 +401,20 @@ export default function InvoicePos({
         </div>
 
         <div className="pos-top">
-          <div className="pos-row">
-            <div className="field">
-              <span>رقم الطباعة</span>
-              <input
-                className="win-input num inp-code"
-                value={number}
-                readOnly
-              />
+          <div className="pos-row dates-row">
+            <div className="dates-left">
+              <div className="field">
+                <span>التاريخ</span>
+                <input className="win-input inp-date" value={dateStr} readOnly />
+              </div>
+              <label className="check">
+                <input type="checkbox" defaultChecked /> تاريخ آخر فاتورة
+              </label>
+              <span className="muted">
+                {lastInv ? new Date(lastInv.date).toLocaleString("en-GB") : "لا يوجد"}
+              </span>
             </div>
+
             <div className="field">
               <span>المخزن</span>
               <select
@@ -390,27 +430,27 @@ export default function InvoicePos({
               </select>
             </div>
             <div className="field">
-              <span>النوع</span>
-              <select className="win-input inp-code" defaultValue="عادي">
+              <span>نوع الفاتورة</span>
+              <select className="win-input inp-select" defaultValue="عادي">
                 <option>عادي</option>
                 <option>جملة</option>
               </select>
             </div>
             <div className="field">
-              <span>التاريخ</span>
-              <input className="win-input inp-date" value={dateStr} readOnly />
+              <span>نوع الدفع</span>
+              <select
+                className="win-input inp-select"
+                value={paymentType}
+                onChange={(e) => setPaymentType(e.target.value as "cash" | "credit")}
+              >
+                <option value="cash">نقدي</option>
+                <option value="credit">آجل</option>
+              </select>
             </div>
-            <label className="check">
-              <input type="checkbox" defaultChecked /> تاريخ آخر فاتورة
-            </label>
-            <span className="muted">
-              {lastInv
-                ? new Date(lastInv.date).toLocaleString("en-GB")
-                : "لا يوجد"}
-            </span>
           </div>
+
           <div className="pos-row">
-            <div className="field">
+            <div className="field party-field">
               <span>{meta.party === "customer" ? "العميل" : "المورد"}</span>
               <select
                 className="win-input inp-name party-input"
@@ -423,31 +463,43 @@ export default function InvoicePos({
                   </option>
                 ))}
               </select>
+              <button
+                type="button"
+                className="add-party"
+                title="إضافة عميل جديد"
+                onClick={openCustomerForm}
+              >
+                ＋
+              </button>
             </div>
-            <div className="field">
-              <span>الكود</span>
-              <input
-                ref={codeRef}
-                className="win-input num inp-code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addByCode();
-                }}
-              />
+
+            <div className="code-search-box">
+              <div className="field">
+                <span>الكود</span>
+                <input
+                  ref={codeRef}
+                  className="win-input num inp-code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addByCode();
+                  }}
+                />
+              </div>
+              <div className="field">
+                <span>بحث الصنف</span>
+                <input
+                  className="win-input inp-search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              <label className="check">
+                <input type="checkbox" defaultChecked /> تجميع الكميات
+              </label>
             </div>
-            <div className="field">
-              <span>بحث الصنف</span>
-              <input
-                className="win-input inp-search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            <label className="check">
-              <input type="checkbox" defaultChecked /> تجميع الكميات
-            </label>
           </div>
+
           <div className="live-line">
             {(kind === "sale_return" || kind === "purchase_return") &&
             booksLocked
@@ -602,22 +654,9 @@ export default function InvoicePos({
           </div>
 
           <div className="box pay-line">
-            <div className="field">
+            <div className="total-badge">
               <span>الإجمالي</span>
-              <b className="money">{gross.toFixed(2)}</b>
-            </div>
-            <div className="field">
-              <span>نوع الدفع</span>
-              <select
-                className="win-input inp-code"
-                value={paymentType}
-                onChange={(e) =>
-                  setPaymentType(e.target.value as "cash" | "credit")
-                }
-              >
-                <option value="cash">نقدي</option>
-                <option value="credit">آجل</option>
-              </select>
+              <b>{gross.toFixed(2)}</b>
             </div>
             <div className="field">
               <span>المدفوع</span>
@@ -640,28 +679,12 @@ export default function InvoicePos({
 
           <div className="box side-box">
             <div className="field">
-              <span>التوصيل</span>
-              <input
-                className="win-input num inp-num"
-                value={delivery}
-                onChange={(e) => setDelivery(n(e.target.value))}
-              />
-            </div>
-            <div className="field">
               <span>ديون سابقة</span>
               <b>{prevBalance.toFixed(2)}</b>
             </div>
             <div className="field">
               <span>بعد الحفظ</span>
               <b>{afterBalance.toFixed(2)}</b>
-            </div>
-            <div className="field notes-field">
-              <span>ملاحظات</span>
-              <input
-                className="win-input"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
             </div>
           </div>
         </div>
@@ -717,7 +740,92 @@ export default function InvoicePos({
           </button>
         </div>
 
-        {previewOpen && (
+        {customerOpen && (
+        <div className="modal-back" onClick={() => setCustomerOpen(false)}>
+          <div
+            className="floating-card"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setCustomerOpen(false);
+            }}
+          >
+            <div className="modal-head">
+              <b>إضافة عميل جديد</b>
+              <button
+                type="button"
+                className="modal-x"
+                onClick={() => setCustomerOpen(false)}
+                aria-label="إغلاق"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="floating-body">
+              <label className="fl fl-full">
+                <span>الاسم</span>
+                <input
+                  className="win-input name-input"
+                  autoFocus
+                  value={newCustomer.name}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, name: e.target.value })
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void saveCustomer();
+                  }}
+                />
+              </label>
+              <label className="fl fl-full">
+                <span>الهاتف</span>
+                <input
+                  className="win-input num"
+                  value={newCustomer.phone}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, phone: e.target.value })
+                  }
+                />
+              </label>
+              <label className="fl fl-full">
+                <span>العنوان</span>
+                <input
+                  className="win-input"
+                  value={newCustomer.address}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, address: e.target.value })
+                  }
+                />
+              </label>
+              <label className="fl fl-full">
+                <span>كود العميل (تلقائي)</span>
+                <input
+                  className="win-input num code-auto"
+                  value={newCustomer.code}
+                  readOnly
+                />
+              </label>
+            </div>
+            <div className="floating-foot">
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setCustomerOpen(false)}
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                disabled={savingCustomer}
+                onClick={() => void saveCustomer()}
+              >
+                {savingCustomer ? "جارى الإضافة..." : "إضافة"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {previewOpen && (
           <InvoicePreview
             data={printData}
             onPrint={() => printInvoice(printData)}

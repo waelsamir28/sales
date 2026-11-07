@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       paymentType?: string;
       discount?: number;
       delivery?: number;
+      net?: number;
       paid?: number;
       notes?: string;
       status?: string;
@@ -95,9 +96,10 @@ export async function POST(request: Request) {
         };
       });
 
-      const discount = round2(body.discount);
-      const delivery = round2(body.delivery);
-      const net = round2(subtotal + tax + delivery - discount);
+      // الخصم والتوصيل اتشالوا من البرنامج — الصافي = الإجمالي + الضريبة
+      // ويُقبل الصافي القادم من الواجهة (لو أرسلته) لأن الخصم/التوصيل صفر
+      const net =
+        body.net != null ? round2(body.net) : round2(subtotal + tax);
       const paid = body.paymentType === "credit" ? round2(body.paid) : net;
       const remaining = round2(Math.max(net - paid, 0));
 
@@ -113,8 +115,8 @@ export async function POST(request: Request) {
           paymentType: body.paymentType ?? "cash",
           subtotal: money(subtotal),
           tax: money(tax),
-          discount: money(discount),
-          delivery: money(delivery),
+          discount: money(0),
+          delivery: money(0),
           paid: money(paid),
           remaining: money(remaining),
           net: money(net),

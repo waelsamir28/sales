@@ -37,8 +37,6 @@ export type InvoicePrintData = {
   notes?: string;
   footer?: string;
   currency?: string;
-  showTax?: boolean;
-  tax?: number;
   /** invoice design settings (from the settings screen) */
   accent?: string;
   paper?: string;
@@ -89,12 +87,6 @@ export function buildInvoiceHtml(data: InvoicePrintData) {
 
   const summary = [
     ["الإجمالي", money(data.subtotal, currency)],
-    ...(data.showTax
-      ? [["الضريبة", money(data.tax, currency)] as [string, string]]
-      : []),
-    ...(Number(data.delivery)
-      ? [["التوصيل", money(data.delivery, currency)] as [string, string]]
-      : []),
     ["المدفوع", money(data.paid, currency)],
     ["الباقي", money(data.remaining, currency)],
   ]

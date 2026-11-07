@@ -51,9 +51,6 @@ export const customers = pgTable("customers", {
   name: varchar("name", { length: 200 }).notNull(),
   phone: varchar("phone", { length: 40 }).notNull().default(""),
   address: varchar("address", { length: 300 }).notNull().default(""),
-  discountPercent: numeric("discount_percent", { precision: 6, scale: 2 })
-    .notNull()
-    .default("0"),
   balance: numeric("balance", { precision: 14, scale: 2 }).notNull().default("0"),
 });
 

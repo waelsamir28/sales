@@ -56,6 +56,7 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   invoice_show_type: "1",
   invoice_show_footer: "1",
   invoice_logo: "",
+  invoice_notes: "",
   // cashier behaviour
   pos_sound: "1",
 };
@@ -143,6 +144,8 @@ export async function ensureSeeded() {
     await tx.execute(
       sql`ALTER TABLE "categories" ADD COLUMN IF NOT EXISTS "color" varchar(20) NOT NULL DEFAULT '#3b82f6'`,
     );
+    // الخصم اتشال من البرنامج بالكامل (مش بنسقط العمود لتجنّب فقدان بيانات)
+    await tx.execute(sql`ALTER TABLE "invoices" ALTER COLUMN "discount" SET DEFAULT '0'`);
 
     const existing = await tx.select({ id: categories.id }).from(categories).limit(1);
     if (existing.length > 0) {
@@ -184,14 +187,14 @@ export async function ensureSeeded() {
     );
 
     await tx.insert(customers).values([
-      { code: "C001", name: "نقدي / عميل يومي", phone: "", address: "", discountPercent: "0", balance: "0" },
-      { code: "C002", name: "مدرسة النور الخاصة", phone: "01011112222", address: "مدينة نصر", discountPercent: "5", balance: "450.00" },
-      { code: "C003", name: "أحمد محمد علي", phone: "01098765432", address: "مصر الجديدة", discountPercent: "0", balance: "120.00" },
-      { code: "C004", name: "مكتبة الصفوة", phone: "01234567890", address: "العباسية", discountPercent: "3", balance: "0" },
-      { code: "C005", name: "حضانة البراعم", phone: "01122334455", address: "مدينة نصر", discountPercent: "7", balance: "80.00" },
-      { code: "C006", name: "فاطمة حسن", phone: "01055667788", address: "الزيتون", discountPercent: "0", balance: "0" },
-      { code: "C007", name: "شركة الأمل للتوريدات", phone: "0223456789", address: "القاهرة", discountPercent: "10", balance: "900.00" },
-      { code: "C008", name: "مدرس محمد عبد الرحمن", phone: "01033445566", address: "حدائق القبة", discountPercent: "0", balance: "35.00" },
+      { code: "C001", name: "نقدي / عميل يومي", phone: "", address: "", balance: "0" },
+      { code: "C002", name: "مدرسة النور الخاصة", phone: "01011112222", address: "مدينة نصر", balance: "450.00" },
+      { code: "C003", name: "أحمد محمد علي", phone: "01098765432", address: "مصر الجديدة", balance: "120.00" },
+      { code: "C004", name: "مكتبة الصفوة", phone: "01234567890", address: "العباسية", balance: "0" },
+      { code: "C005", name: "حضانة البراعم", phone: "01122334455", address: "مدينة نصر", balance: "80.00" },
+      { code: "C006", name: "فاطمة حسن", phone: "01055667788", address: "الزيتون", balance: "0" },
+      { code: "C007", name: "شركة الأمل للتوريدات", phone: "0223456789", address: "القاهرة", balance: "900.00" },
+      { code: "C008", name: "مدرس محمد عبد الرحمن", phone: "01033445566", address: "حدائق القبة", balance: "35.00" },
     ]);
 
     await tx.insert(suppliers).values([

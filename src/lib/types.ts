@@ -27,7 +27,6 @@ export type Customer = {
   name: string;
   phone: string;
   address: string;
-  discountPercent: string;
   balance: string;
 };
 

@@ -2029,3 +2029,240 @@ table.data td.cell-name,
   .pay-line { flex-wrap: wrap; }
   .pay-line .net-box { margin-inline-start: 0; width: 100%; }
 }
+
+/* ================= شاشة الفاتورة — تحسينات ================= */
+.dates-row {
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 14px;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 8px;
+}
+
+/* التاريخ + تاريخ آخر فاتورة على الشمال */
+.dates-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: auto;
+  padding-inline-start: 12px;
+  border-inline-start: 1px dashed #dbe3ee;
+  white-space: nowrap;
+}
+
+/* مربع الكود + بحث الصنف لوحدهم */
+.code-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  background: #f8fafc;
+  min-width: 0;
+}
+.code-search-box .field { flex: 0 1 auto; }
+
+/* زر إضافة عميل بجوار خانة الاسم */
+.party-field { position: relative; }
+.add-party {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border: 1px solid #16a34a;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #4ade80, #16a34a);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.28);
+}
+.add-party:hover { filter: brightness(1.07); }
+.add-party:active { transform: translateY(1px); }
+
+/* الإجمالي: رقم كبير وملون */
+.total-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1d4ed8, #4f46e5 60%, #7c3aed);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.32);
+  white-space: nowrap;
+}
+.total-badge span { font-size: 12.5px; font-weight: 700; opacity: 0.92; }
+.total-badge b {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fde68a;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+}
+
+/* بطاقة عائمة صغيرة لإضافة عميل */
+.floating-card {
+  width: min(360px, 92vw);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  align-self: flex-start;
+  margin-top: 8vh;
+}
+.floating-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.floating-body .fl { width: 100%; }
+.floating-body .win-input { width: 100%; }
+.floating-body .code-auto {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 800;
+  text-align: center;
+}
+.floating-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid #e5eaf1;
+  background: #f8fafc;
+}
+
+/* خانة الاسم ملونة في كل البرنامج */
+.name-input,
+.inp-name,
+input.win-input[data-name="1"],
+.fl.fl-name > .win-input {
+  background-color: #fffdf5 !important;
+  border-color: #f6d98a !important;
+}
+.fl.fl-name > .win-input:focus,
+.name-input:focus {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22) !important;
+}
+
+/* ================= شاشة الأصناف والمجموعات ================= */
+.toolbar-title {
+  font-weight: 800;
+  color: #1e3a8a;
+  font-size: 13.5px;
+  white-space: nowrap;
+  padding-inline-end: 6px;
+}
+
+.color-input {
+  width: 46px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #b7c4d8;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* بطاقات البنود */
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+  gap: 10px;
+  padding: 10px;
+  overflow: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: start;
+}
+
+.group-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.group-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex: 0 0 14px;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.group-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 110px;
+}
+.group-meta b {
+  font-size: 14px;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-inline-start: auto;
+}
+.group-actions .btn { height: 28px; padding: 0 10px; font-size: 12.5px; }
+
+.group-pill {
+  display: inline-block;
+  border: 1px solid #cbd5e1;
+  border-inline-start-width: 4px;
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f8fafc;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.quick-add .fl-name { width: 260px; }
+
+.row-actions { white-space: nowrap; }
+.row-actions .btn { height: 26px; padding: 0 8px; font-size: 12px; margin-inline: 2px; }
+
+.stat-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+}
+.stat-strip > div {
+  flex: 1 1 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #f1f5fb;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #475569;
+}
+.stat-strip b { font-size: 18px; color: #1d4ed8; }

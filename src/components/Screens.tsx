@@ -46,7 +46,16 @@ export function ItemsScreen({
   reload: () => Promise<void>;
   toast: (k: "ok" | "err" | "info", t: string) => void;
 }) {
-  const empty = {
+  const emptyGroup = { name: "", color: "#2563eb" };
+  const emptyQuick = {
+    name: "",
+    categoryId: data.categories[0]?.id ?? 1,
+    unit: "عدد",
+    price: "",
+    cost: "",
+    stock: "",
+  };
+  const emptyItem = {
     id: 0,
     code: "",
     barcode: "",
@@ -61,56 +70,470 @@ export function ItemsScreen({
     active: true,
     saleOnly: false,
   };
-  const [form, setForm] = useState(empty);
+
+  const [form, setForm] = useState(emptyItem);
+  const [quick, setQuick] = useState(emptyQuick);
+  const [group, setGroup] = useState(emptyGroup);
   const [q, setQ] = useState("");
+  const [groupFilter, setGroupFilter] = useState<number | 0>(0);
   const [sub, setSub] = useState("list");
-  const rows = data.items.filter(
-    (i) => !q || i.name.includes(q) || i.code.includes(q) || i.barcode.includes(q),
-  );
+  const [busy, setBusy] = useState(false);
+
   const catName = (id: number) => data.categories.find((c) => c.id === id)?.name ?? "";
+  const catCount = (id: number) => data.items.filter((i) => i.categoryId === id).length;
+  const rows = data.items.filter(
+    (i) =>
+      (!groupFilter || i.categoryId === groupFilter) &&
+      (!q || i.name.includes(q) || i.code.includes(q) || i.barcode.includes(q)),
+  );
+  const groups = data.categories.length;
+  const stockValue = data.items.reduce((sum, i) => sum + n(i.stock) * n(i.cost), 0);
+
+  async function call(method: "POST" | "PUT" | "DELETE", body?: unknown, query = "") {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/items${query}`, {
+        method,
+        headers: body ? { "Content-Type": "application/json" } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        message?: string;
+        item?: Item;
+        category?: { id: number; name: string };
+      };
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function quickAdd() {
+    if (!quick.name.trim()) {
+      toast("err", "اكتب اسم الصنف");
+      return;
+    }
+    const json = await call("POST", { mode: "quick", ...quick });
+    if (!json.ok) return toast("err", json.error || "تعذر الإضافة");
+    toast("ok", `تمت إضافة «${json.item?.name ?? quick.name}» إلى ${catName(quick.categoryId)}`);
+    setQuick({ ...emptyQuick, categoryId: quick.categoryId });
+    await reload();
+  }
+
+  async function addGroup() {
+    if (!group.name.trim()) {
+      toast("err", "اكتب اسم البند");
+      return;
+    }
+    const json = await call("POST", { mode: "category", ...group, sortOrder: groups + 1 });
+    if (!json.ok) return toast("err", json.error || "تعذر إضافة البند");
+    toast("ok", `تمت إضافة بند «${json.category?.name ?? group.name}»`);
+    setGroup(emptyGroup);
+    await reload();
+  }
+
+  async function removeGroup(id: number) {
+    const json = await call("DELETE", undefined, `?mode=category&id=${id}`);
+    if (!json.ok) return toast("err", json.error || "تعذر حذف البند");
+    toast("ok", "تم حذف البند");
+    if (groupFilter === id) setGroupFilter(0);
+    await reload();
+  }
 
   async function save() {
-    const method = form.id ? "PUT" : "POST";
-    const res = await fetch("/api/items", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const json = (await res.json()) as { ok: boolean; error?: string };
+    if (!form.name.trim()) {
+      toast("err", "اكتب اسم الصنف");
+      return;
+    }
+    const json = await call(form.id ? "PUT" : "POST", form);
     if (!json.ok) return toast("err", json.error || "خطأ");
-    toast("ok", "تم حفظ الصنف");
-    setForm(empty);
+    toast("ok", form.id ? "تم تعديل الصنف" : "تمت إضافة الصنف");
+    setForm(emptyItem);
     await reload();
   }
 
   async function remove(id: number) {
-    await fetch(`/api/items?id=${id}`, { method: "DELETE" });
-    toast("ok", "تم الحذف");
+    const json = await call("DELETE", undefined, `?id=${id}`);
+    if (!json.ok) return toast("err", json.error || "تعذر الحذف");
+    toast("ok", json.message || "تم الحذف");
     await reload();
   }
 
+  function editItem(item: Item) {
+    setForm({ ...item });
+    setSub("list");
+  }
+
   return (
-    <Panel title="إدارة الأصناف" extra={`${data.items.length} صنف`}>
+    <Panel
+      title="الأصناف والمجموعات"
+      extra={
+        <span className="badge info">
+          {data.items.length} صنف · {groups} بند
+        </span>
+      }
+    >
       <SubTabs
         items={[
           { id: "list", label: "الأصناف" },
+          { id: "groups", label: "المجموعات · البنود" },
+          { id: "quick", label: "إضافة سريعة" },
           { id: "profit", label: "أرباح الأصناف" },
           { id: "low", label: "تحت الحد الأدنى" },
         ]}
         value={sub}
         onChange={setSub}
       />
+
+      {/* ------------------ المجموعات / البنود ------------------ */}
+      {sub === "groups" ? (
+        <>
+          <div className="toolbar">
+            <span className="toolbar-title">إضافة بند جديد</span>
+            <label className="fl fl-name">
+              <span>اسم البند</span>
+              <input
+                className="win-input name-input"
+                placeholder="مثال: أقلام"
+                value={group.name}
+                onChange={(e) => setGroup({ ...group, name: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void addGroup();
+                }}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>اللون</span>
+              <input
+                type="color"
+                className="color-input"
+                value={group.color}
+                onChange={(e) => setGroup({ ...group, color: e.target.value })}
+              />
+            </label>
+            <button type="button" className="btn ok" disabled={busy} onClick={() => void addGroup()}>
+              ＋ إضافة بند
+            </button>
+          </div>
+          <div className="group-grid">
+            {data.categories.map((c) => (
+              <div className="group-card" key={c.id}>
+                <span className="group-dot" style={{ background: c.color }} />
+                <div className="group-meta">
+                  <b>{c.name}</b>
+                  <span className="muted">{catCount(c.id)} صنف</span>
+                </div>
+                <div className="group-actions">
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      setSub("quick");
+                      setQuick({ ...emptyQuick, categoryId: c.id });
+                    }}
+                  >
+                    ＋ صنف
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      setGroupFilter(c.id);
+                      setSub("list");
+                    }}
+                  >
+                    عرض
+                  </button>
+                  <button
+                    type="button"
+                    className="btn danger"
+                    onClick={() => void removeGroup(c.id)}
+                    title="حذف البند"
+                  >
+                    حذف
+                  </button>
+                </div>
+              </div>
+            ))}
+            {data.categories.length === 0 ? (
+              <p className="muted">ما فيش بنود لسه — أضف أول بند من فوق.</p>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
+      {/* ------------------ إضافة سريعة ------------------ */}
+      {sub === "quick" ? (
+        <>
+          <div className="toolbar">
+            <span className="toolbar-title">صنف جديد في بند</span>
+            <span className="muted">الكود والباركود بيتولّدوا تلقائيًا</span>
+          </div>
+          <div className="form-row quick-add">
+            <label className="fl fl-name">
+              <span>اسم الصنف</span>
+              <input
+                className="win-input name-input"
+                autoFocus
+                value={quick.name}
+                onChange={(e) => setQuick({ ...quick, name: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void quickAdd();
+                }}
+              />
+            </label>
+            <label className="fl fl-select">
+              <span>البند / المجموعة</span>
+              <select
+                className="win-input"
+                value={quick.categoryId}
+                onChange={(e) => setQuick({ ...quick, categoryId: Number(e.target.value) })}
+              >
+                {data.categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="fl fl-unit">
+              <span>الوحدة</span>
+              <input
+                className="win-input"
+                value={quick.unit}
+                onChange={(e) => setQuick({ ...quick, unit: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>الكمية</span>
+              <input
+                className="win-input num"
+                value={quick.stock}
+                onChange={(e) => setQuick({ ...quick, stock: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>سعر البيع</span>
+              <input
+                className="win-input num"
+                value={quick.price}
+                onChange={(e) => setQuick({ ...quick, price: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>سعر التكلفة</span>
+              <input
+                className="win-input num"
+                value={quick.cost}
+                onChange={(e) => setQuick({ ...quick, cost: e.target.value })}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={busy}
+              onClick={() => void quickAdd()}
+            >
+              ＋ إضافة الصنف
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {/* ------------------ الأصناف ------------------ */}
+      {sub === "list" ? (
+        <>
+          <div className="toolbar">
+            <div className="field">
+              <span>بحث</span>
+              <input className="win-input inp-search" value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+            <div className="field">
+              <span>البند</span>
+              <select
+                className="win-input inp-select"
+                value={groupFilter}
+                onChange={(e) => setGroupFilter(Number(e.target.value))}
+              >
+                <option value={0}>كل البنود</option>
+                {data.categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button type="button" className="btn primary" disabled={busy} onClick={() => void save()}>
+              {form.id ? "💾 حفظ التعديل" : "＋ إضافة الصنف"}
+            </button>
+            <button type="button" className="btn" onClick={() => setForm(emptyItem)}>
+              جديد
+            </button>
+            {form.id ? <span className="badge warn">تعديل: {form.name}</span> : null}
+          </div>
+
+          <div className="form-row">
+            <label className="fl fl-code">
+              <span>الكود (تلقائي)</span>
+              <input
+                className="win-input num"
+                value={form.code}
+                placeholder="auto"
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-code">
+              <span>الباركود</span>
+              <input
+                className="win-input num"
+                value={form.barcode}
+                placeholder="auto"
+                onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-item">
+              <span>اسم الصنف</span>
+              <input
+                className="win-input name-input"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-select">
+              <span>البند</span>
+              <select
+                className="win-input"
+                value={form.categoryId}
+                onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
+              >
+                {data.categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="fl fl-unit">
+              <span>الوحدة</span>
+              <input
+                className="win-input"
+                value={form.unit}
+                onChange={(e) => setForm({ ...form, unit: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>سعر البيع</span>
+              <input
+                className="win-input num"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>سعر التكلفة</span>
+              <input
+                className="win-input num"
+                value={form.cost}
+                onChange={(e) => setForm({ ...form, cost: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>الكمية</span>
+              <input
+                className="win-input num"
+                value={form.stock}
+                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+              />
+            </label>
+            <label className="fl fl-num">
+              <span>حد أدنى</span>
+              <input
+                className="win-input num"
+                value={form.minStock}
+                onChange={(e) => setForm({ ...form, minStock: e.target.value })}
+              />
+            </label>
+          </div>
+
+          <div className="grid-wrap scroll-y">
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>كود</th>
+                  <th>الصنف</th>
+                  <th>البند</th>
+                  <th>وحدة</th>
+                  <th>سعر</th>
+                  <th>تكلفة</th>
+                  <th>كمية</th>
+                  <th>حد أدنى</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((i) => (
+                  <tr key={i.id} className={form.id === i.id ? "sel" : ""}>
+                    <td>{i.code}</td>
+                    <td className="cell-name">{i.name}</td>
+                    <td className="cell-name">
+                      <span className="group-pill" style={{ borderColor: data.categories.find((c) => c.id === i.categoryId)?.color }}>
+                        {catName(i.categoryId)}
+                      </span>
+                    </td>
+                    <td>{i.unit}</td>
+                    <td>{n(i.price).toFixed(2)}</td>
+                    <td>{n(i.cost).toFixed(2)}</td>
+                    <td style={{ color: n(i.stock) <= n(i.minStock) ? "#b91c1c" : undefined }}>{n(i.stock)}</td>
+                    <td>{n(i.minStock)}</td>
+                    <td className="row-actions">
+                      <button type="button" className="btn" onClick={() => editItem(i)}>
+                        تعديل
+                      </button>
+                      <button type="button" className="btn danger" onClick={() => void remove(i.id)}>
+                        حذف
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
+
+      {/* ------------------ أرباح / حد أدنى ------------------ */}
       {sub === "profit" ? (
-        <ProfitsView data={data} />
-      ) : sub === "low" ? (
+        <>
+          <div className="stat-strip">
+            <div>
+              <span>قيمة المخزون (تكلفة)</span>
+              <b>{stockValue.toFixed(2)}</b>
+            </div>
+            <div>
+              <span>عدد الأصناف</span>
+              <b>{data.items.length}</b>
+            </div>
+            <div>
+              <span>عدد البنود</span>
+              <b>{groups}</b>
+            </div>
+          </div>
+          <ProfitsView data={data} />
+        </>
+      ) : null}
+
+      {sub === "low" ? (
         <div className="grid-wrap scroll-y">
           <table className="data">
             <thead>
               <tr>
                 <th>الكود</th>
                 <th>الصنف</th>
-                <th>الرصيد</th>
-                <th>الحد</th>
+                <th>البند</th>
+                <th>الكمية</th>
+                <th>الحد الأدنى</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -120,112 +543,20 @@ export function ItemsScreen({
                   <tr key={i.id}>
                     <td>{i.code}</td>
                     <td className="cell-name">{i.name}</td>
-                    <td>{n(i.stock)}</td>
+                    <td className="cell-name">{catName(i.categoryId)}</td>
+                    <td style={{ color: "#b91c1c", fontWeight: 800 }}>{n(i.stock)}</td>
                     <td>{n(i.minStock)}</td>
+                    <td className="row-actions">
+                      <button type="button" className="btn" onClick={() => editItem(i)}>
+                        تعديل
+                      </button>
+                    </td>
                   </tr>
                 ))}
             </tbody>
           </table>
         </div>
-      ) : (
-      <>
-      <div className="toolbar">
-        <div className="field">
-          <span>بحث</span>
-          <input className="win-input inp-search" value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-        <button type="button" className="btn primary" onClick={() => void save()}>
-          حفظ الصنف
-        </button>
-        <button type="button" className="btn" onClick={() => setForm(empty)}>
-          جديد
-        </button>
-      </div>
-      <div className="form-row">
-        <label className="fl fl-code">
-          <span>الكود</span>
-          <input className="win-input num" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
-        </label>
-        <label className="fl fl-code">
-          <span>الباركود</span>
-          <input className="win-input num" value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} />
-        </label>
-        <label className="fl fl-item">
-          <span>اسم الصنف</span>
-          <input className="win-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        </label>
-        <label className="fl fl-select">
-          <span>القسم</span>
-          <select
-            className="win-input"
-            value={form.categoryId}
-            onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
-          >
-            {data.categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="fl fl-unit">
-          <span>الوحدة</span>
-          <input className="win-input" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
-        </label>
-        <label className="fl fl-num">
-          <span>سعر البيع</span>
-          <input className="win-input num" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        </label>
-        <label className="fl fl-num">
-          <span>سعر التكلفة</span>
-          <input className="win-input num" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
-        </label>
-        <label className="fl fl-num">
-          <span>الرصيد</span>
-          <input className="win-input num" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-        </label>
-      </div>
-      <div className="grid-wrap scroll-y">
-        <table className="data">
-          <thead>
-            <tr>
-              <th>كود</th>
-              <th>الصنف</th>
-              <th>القسم</th>
-              <th>وحدة</th>
-              <th>سعر</th>
-              <th>تكلفة</th>
-              <th>رصيد</th>
-              <th>حد أدنى</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((i) => (
-              <tr key={i.id} className={form.id === i.id ? "sel" : ""}>
-                <td>{i.code}</td>
-                <td className="cell-name">{i.name}</td>
-                <td className="cell-name">{catName(i.categoryId)}</td>
-                <td>{i.unit}</td>
-                <td>{n(i.price).toFixed(2)}</td>
-                <td>{n(i.cost).toFixed(2)}</td>
-                <td style={{ color: n(i.stock) <= n(i.minStock) ? "#b91c1c" : undefined }}>{n(i.stock)}</td>
-                <td>{n(i.minStock)}</td>
-                <td>
-                  <button type="button" className="btn" onClick={() => setForm(i)}>
-                    تعديل
-                  </button>{" "}
-                  <button type="button" className="btn danger" onClick={() => void remove(i.id)}>
-                    حذف
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      </>
-      )}
+      ) : null}
     </Panel>
   );
 }
@@ -250,7 +581,6 @@ export function PartyScreen({
     name: "",
     phone: "",
     address: "",
-    discountPercent: "0",
     balance: "0",
     jobTitle: "موظف",
     salary: "0",
@@ -337,7 +667,6 @@ export function PartyScreen({
               name: "",
               phone: "",
               address: "",
-              discountPercent: "0",
               balance: "0",
               jobTitle: "موظف",
               salary: "0",
@@ -358,7 +687,7 @@ export function PartyScreen({
         )}
         <label className="fl fl-name">
           <span>الاسم</span>
-          <input className="win-input" value={String(form.name)} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <input className="win-input name-input" value={String(form.name)} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
         <label className="fl fl-phone">
           <span>الهاتف</span>
@@ -368,16 +697,6 @@ export function PartyScreen({
           <label className="fl fl-address">
             <span>العنوان</span>
             <input className="win-input" value={String(form.address)} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          </label>
-        )}
-        {kind === "customers" && (
-          <label className="fl fl-num">
-            <span>خصم %</span>
-            <input
-              className="win-input num"
-              value={String(form.discountPercent)}
-              onChange={(e) => setForm({ ...form, discountPercent: e.target.value })}
-            />
           </label>
         )}
         {kind !== "employees" && (
@@ -411,7 +730,6 @@ export function PartyScreen({
               <th>الاسم</th>
               <th>هاتف</th>
               {kind !== "employees" && <th>عنوان</th>}
-              {kind === "customers" && <th>خصم</th>}
               {kind !== "employees" && <th>رصيد</th>}
               {kind === "employees" && <th>وظيفة</th>}
               {kind === "employees" && <th>راتب</th>}
@@ -425,7 +743,6 @@ export function PartyScreen({
                 <td className="cell-name">{r.name}</td>
                 <td>{r.phone}</td>
                 {"address" in r && kind !== "employees" && <td>{r.address}</td>}
-                {kind === "customers" && "discountPercent" in r ? <td>{String(r.discountPercent)}</td> : null}
                 {kind !== "employees" && "balance" in r ? <td>{n(r.balance).toFixed(2)}</td> : null}
                 {kind === "employees" && "jobTitle" in r ? <td>{String(r.jobTitle)}</td> : null}
                 {kind === "employees" && "salary" in r ? <td>{n(r.salary).toFixed(2)}</td> : null}
@@ -511,7 +828,7 @@ export function CashScreen({
         </label>
         <label className="fl fl-name">
           <span>الاسم</span>
-          <select className="win-input" value={partyId} onChange={(e) => setPartyId(Number(e.target.value))}>
+          <select className="win-input name-input" value={partyId} onChange={(e) => setPartyId(Number(e.target.value))}>
             <option value={0}>—</option>
             {parties.map((p) => (
               <option key={p.id} value={p.id}>
@@ -725,7 +1042,7 @@ export function AttendanceScreen({
       <div className="toolbar">
         <div className="field">
           <span>الموظف</span>
-          <select className="win-input inp-name" value={employeeId} onChange={(e) => setEmployeeId(Number(e.target.value))}>
+          <select className="win-input inp-name name-input" value={employeeId} onChange={(e) => setEmployeeId(Number(e.target.value))}>
             {data.employees.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.name} — {e.jobTitle}
@@ -1136,7 +1453,7 @@ export function SettingsScreen({
     total: demoTotal,
     paid: demoTotal,
     remaining: 0,
-    notes: "معاينة تجريبية — يمكنك تغيير التصميم والألوان من هنا ثم الحفظ",
+    notes: form.invoice_notes || "",
     footer: form.invoice_footer,
     currency,
     accent: form.invoice_accent,
