@@ -41,10 +41,14 @@ export function ItemsScreen({
   data,
   reload,
   toast,
+  subTab,
+  onSubTab,
 }: {
   data: BootstrapData;
   reload: () => Promise<void>;
   toast: (k: "ok" | "err" | "info", t: string) => void;
+  subTab?: string;
+  onSubTab?: (id: string) => void;
 }) {
   const emptyGroup = { name: "", color: "#2563eb" };
   const emptyQuick = {
@@ -76,7 +80,12 @@ export function ItemsScreen({
   const [group, setGroup] = useState(emptyGroup);
   const [q, setQ] = useState("");
   const [groupFilter, setGroupFilter] = useState<number | 0>(0);
-  const [sub, setSub] = useState("list");
+  const [subLocal, setSubLocal] = useState("list");
+  const sub = subTab ?? subLocal;
+  const setSub = (id: string) => {
+    setSubLocal(id);
+    onSubTab?.(id);
+  };
   const [busy, setBusy] = useState(false);
 
   const catName = (id: number) => data.categories.find((c) => c.id === id)?.name ?? "";
@@ -167,7 +176,7 @@ export function ItemsScreen({
 
   return (
     <Panel
-      title="الأصناف والمجموعات"
+      title="الأصناف · المجموعات · البنود"
       extra={
         <span className="badge info">
           {data.items.length} صنف · {groups} بند
@@ -189,8 +198,8 @@ export function ItemsScreen({
       {/* ------------------ المجموعات / البنود ------------------ */}
       {sub === "groups" ? (
         <>
-          <div className="toolbar">
-            <span className="toolbar-title">إضافة بند جديد</span>
+          <div className="dark-bar">
+            <span className="dark-bar-title">＋ إضافة بند / مجموعة جديدة</span>
             <label className="fl fl-name">
               <span>اسم البند</span>
               <input
@@ -266,11 +275,19 @@ export function ItemsScreen({
       {/* ------------------ إضافة سريعة ------------------ */}
       {sub === "quick" ? (
         <>
-          <div className="toolbar">
-            <span className="toolbar-title">صنف جديد في بند</span>
-            <span className="muted">الكود والباركود بيتولّدوا تلقائيًا</span>
+          <div className="dark-bar">
+            <span className="dark-bar-title">＋ إضافة صنف جديد</span>
+            <span className="dark-bar-note">الكود والباركود بيتولّدوا تلقائيًا · Enter يضيف الصنف</span>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={busy}
+              onClick={() => void quickAdd()}
+            >
+              ＋ إضافة الصنف
+            </button>
           </div>
-          <div className="form-row quick-add">
+          <div className="form-row quick-add dark-fields">
             <label className="fl fl-name">
               <span>اسم الصنف</span>
               <input
@@ -329,14 +346,6 @@ export function ItemsScreen({
                 onChange={(e) => setQuick({ ...quick, cost: e.target.value })}
               />
             </label>
-            <button
-              type="button"
-              className="btn primary"
-              disabled={busy}
-              onClick={() => void quickAdd()}
-            >
-              ＋ إضافة الصنف
-            </button>
           </div>
         </>
       ) : null}
@@ -344,12 +353,18 @@ export function ItemsScreen({
       {/* ------------------ الأصناف ------------------ */}
       {sub === "list" ? (
         <>
-          <div className="toolbar">
-            <div className="field">
+          <div className="dark-bar">
+            <span className="dark-bar-title">الأصناف</span>
+            <div className="field dn">
               <span>بحث</span>
-              <input className="win-input inp-search" value={q} onChange={(e) => setQ(e.target.value)} />
+              <input
+                className="win-input inp-search"
+                placeholder="اسم / كود / باركود"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
             </div>
-            <div className="field">
+            <div className="field dn">
               <span>البند</span>
               <select
                 className="win-input inp-select"
@@ -364,16 +379,18 @@ export function ItemsScreen({
                 ))}
               </select>
             </div>
-            <button type="button" className="btn primary" disabled={busy} onClick={() => void save()}>
-              {form.id ? "💾 حفظ التعديل" : "＋ إضافة الصنف"}
-            </button>
-            <button type="button" className="btn" onClick={() => setForm(emptyItem)}>
-              جديد
-            </button>
-            {form.id ? <span className="badge warn">تعديل: {form.name}</span> : null}
+            <div className="dark-bar-actions">
+              <button type="button" className="btn primary" disabled={busy} onClick={() => void save()}>
+                {form.id ? "💾 حفظ التعديل" : "＋ إضافة الصنف"}
+              </button>
+              <button type="button" className="btn" onClick={() => setForm(emptyItem)}>
+                ＋ جديد
+              </button>
+              {form.id ? <span className="badge warn">تعديل: {form.name}</span> : null}
+            </div>
           </div>
 
-          <div className="form-row">
+          <div className="form-row item-form dark-fields">
             <label className="fl fl-code">
               <span>الكود (تلقائي)</span>
               <input
@@ -392,14 +409,24 @@ export function ItemsScreen({
                 onChange={(e) => setForm({ ...form, barcode: e.target.value })}
               />
             </label>
-            <label className="fl fl-item">
-              <span>اسم الصنف</span>
-              <input
-                className="win-input name-input"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </label>
+            <div className="fl-pair">
+              <label className="fl fl-item">
+                <span>اسم الصنف</span>
+                <input
+                  className="win-input name-input"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </label>
+              <label className="fl fl-num fl-min">
+                <span>حد أدنى</span>
+                <input
+                  className="win-input num"
+                  value={form.minStock}
+                  onChange={(e) => setForm({ ...form, minStock: e.target.value })}
+                />
+              </label>
+            </div>
             <label className="fl fl-select">
               <span>البند</span>
               <select
@@ -446,18 +473,10 @@ export function ItemsScreen({
                 onChange={(e) => setForm({ ...form, stock: e.target.value })}
               />
             </label>
-            <label className="fl fl-num">
-              <span>حد أدنى</span>
-              <input
-                className="win-input num"
-                value={form.minStock}
-                onChange={(e) => setForm({ ...form, minStock: e.target.value })}
-              />
-            </label>
           </div>
 
-          <div className="grid-wrap scroll-y">
-            <table className="data">
+          <div className="grid-wrap scroll-y items-table-wrap">
+            <table className="data items-table">
               <thead>
                 <tr>
                   <th>كود</th>
@@ -496,6 +515,13 @@ export function ItemsScreen({
                     </td>
                   </tr>
                 ))}
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="empty-row">
+                      ما فيش أصناف مطابقة — جرّب بحث تاني أو أضف صنف جديد.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -524,8 +550,13 @@ export function ItemsScreen({
       ) : null}
 
       {sub === "low" ? (
-        <div className="grid-wrap scroll-y">
-          <table className="data">
+        <>
+        <div className="dark-bar">
+          <span className="dark-bar-title">تحت الحد الأدنى</span>
+          <span className="dark-bar-note">الأصناف اللي الكمية بتاعتها وصلت للحد الأدنى أو أقل</span>
+        </div>
+        <div className="grid-wrap scroll-y items-table-wrap">
+          <table className="data items-table">
             <thead>
               <tr>
                 <th>الكود</th>
@@ -556,6 +587,7 @@ export function ItemsScreen({
             </tbody>
           </table>
         </div>
+        </>
       ) : null}
     </Panel>
   );
@@ -856,7 +888,8 @@ export function CashScreen({
           <input className="win-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
       </div>
-      <div className="toolbar">
+      <div className="dark-bar">
+        <span className="dark-bar-title">حركة نقدية جديدة</span>
         <button type="button" className="btn primary" onClick={() => void save()}>
           حفظ الحركة
         </button>
@@ -944,7 +977,8 @@ export function ExpensesScreen({
           <input className="win-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
       </div>
-      <div className="toolbar">
+      <div className="dark-bar">
+        <span className="dark-bar-title">مصروف جديد</span>
         <button type="button" className="btn primary" onClick={() => void save()}>
           حفظ المصروف
         </button>
@@ -1039,8 +1073,9 @@ export function AttendanceScreen({
 
   return (
     <Panel title="حضور وانصراف">
-      <div className="toolbar">
-        <div className="field">
+      <div className="dark-bar">
+        <span className="dark-bar-title">تسجيل الحضور والانصراف</span>
+        <div className="field dn">
           <span>الموظف</span>
           <select className="win-input inp-name name-input" value={employeeId} onChange={(e) => setEmployeeId(Number(e.target.value))}>
             {data.employees.map((e) => (
@@ -1149,7 +1184,8 @@ export function TransfersScreen({
           <input className="win-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
       </div>
-      <div className="toolbar">
+      <div className="dark-bar">
+        <span className="dark-bar-title">تحويل مخزون جديد</span>
         <button type="button" className="btn primary" onClick={() => void save()}>
           تنفيذ التحويل
         </button>
@@ -1270,8 +1306,9 @@ export function PriceListScreen({ data }: { data: BootstrapData }) {
         </button>
       }
     >
-      <div className="toolbar">
-        <div className="field">
+      <div className="dark-bar">
+        <span className="dark-bar-title">بيان الأسعار</span>
+        <div className="field dn">
           <span>بحث</span>
           <input className="win-input inp-search" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
@@ -2063,10 +2100,19 @@ export function renderModule(
   data: BootstrapData,
   reload: () => Promise<void>,
   toast: (k: "ok" | "err" | "info", t: string) => void,
+  opts?: { sub?: string; onSub?: (id: string) => void },
 ) {
   switch (module) {
     case "items":
-      return <ItemsScreen data={data} reload={reload} toast={toast} />;
+      return (
+        <ItemsScreen
+          data={data}
+          reload={reload}
+          toast={toast}
+          subTab={opts?.sub}
+          onSubTab={opts?.onSub}
+        />
+      );
     case "customers":
       return <PartyScreen kind="customers" data={data} reload={reload} toast={toast} />;
     case "suppliers":

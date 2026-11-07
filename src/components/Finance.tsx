@@ -14,17 +14,20 @@ export function SubTabs({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="subtabs">
-      {items.map((it) => (
-        <button
-          key={it.id}
-          type="button"
-          className={`subtab ${value === it.id ? "on" : ""}`}
-          onClick={() => onChange(it.id)}
-        >
-          {it.label}
-        </button>
-      ))}
+    <div className="subtabs-wrap">
+      <div className="subtabs">
+        {items.map((it) => (
+          <button
+            key={it.id}
+            type="button"
+            className={`subtab ${value === it.id ? "on" : ""}`}
+            onClick={() => onChange(it.id)}
+          >
+            {it.label}
+          </button>
+        ))}
+      </div>
+      <div className="subtabs-bar" aria-hidden="true" />
     </div>
   );
 }

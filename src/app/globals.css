@@ -2266,3 +2266,220 @@ input.win-input[data-name="1"],
   color: #475569;
 }
 .stat-strip b { font-size: 18px; color: #1d4ed8; }
+
+/* ================= شريط غامق أعلى كل شاشة داخلية (بحث / بند / إضافة) ================= */
+.dark-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 10px 12px 8px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #24324a, #16202f);
+  border: 1px solid #0f172a;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  flex: 0 0 auto;
+}
+
+.dark-bar-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.dark-bar-note {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #a9b8cd;
+  white-space: nowrap;
+}
+
+.dark-bar .field > span { color: #cfd9e8; }
+
+.dark-bar .win-input,
+.dark-bar .field input,
+.dark-bar .field select {
+  background-color: #f8fafc !important;
+  border-color: #334155 !important;
+  color: #0f172a !important;
+  font-weight: 700;
+}
+
+.dark-bar .win-input.name-input {
+  background-color: #fffdf5 !important;
+  border-color: #f6d98a !important;
+}
+
+.dark-bar .color-input { border-color: #334155; }
+
+.dark-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* الحقول اللي جوه الشاشة: حجم أصغر شوية + الكلام في النص */
+.dark-fields {
+  justify-content: center;
+  align-items: flex-end;
+  text-align: center;
+}
+
+.dark-fields .fl { align-items: center; }
+.dark-fields .fl > span { text-align: center; }
+.dark-fields .fl .win-input { text-align: center; }
+.dark-fields .fl.fl-name .win-input,
+.dark-fields .fl.fl-item .win-input { text-align: center; }
+
+.fl.fl-min { width: 92px; }
+.item-form .fl-code { width: 96px; }
+.item-form .fl-num { width: 96px; }
+.item-form .fl-unit { width: 84px; }
+.item-form .fl-select { width: 150px; }
+.item-form .fl-item { width: 240px; }
+.item-form .fl .win-input { height: 30px; font-size: 12.5px; }
+.item-form .fl > span { font-size: 12px; }
+
+/* ================= شريط أزرار الصفحات الداخلية (تحت الأزرار مباشرة) ================= */
+.subtabs-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 0;
+  background: #f4f7fb;
+  border-bottom: 1px solid #e4e9f0;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.subtabs-wrap .subtabs {
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.subtabs-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #24324a, #16202f);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  margin: 0 auto 6px;
+  width: min(760px, 100%);
+}
+
+.subtabs-wrap .subtab {
+  height: 32px;
+  padding: 0 16px;
+  text-align: center;
+}
+
+/* ================= جدول الأصناف: أكبر + خطوط فواصل ================= */
+.items-table-wrap {
+  margin: 0 12px 12px;
+  border: 1px solid #c3cfe2;
+  border-radius: 12px;
+  overflow: auto;
+  background: #fff;
+  min-height: 280px;
+}
+
+table.data.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+table.data.items-table th {
+  background: linear-gradient(180deg, #24324a, #1a2637);
+  color: #eaf1fb;
+  border-inline: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid #0f172a;
+  padding: 10px 8px;
+  font-size: 13.5px;
+  text-align: center;
+}
+
+table.data.items-table th:first-child { border-inline-start: 0; }
+table.data.items-table th:last-child { border-inline-end: 0; }
+
+table.data.items-table td {
+  border-bottom: 1px solid #d8e1ee;
+  border-inline: 1px solid #e7edf5;
+  padding: 10px 8px;
+  font-size: 13.5px;
+  text-align: center;
+  background: #fff;
+}
+
+table.data.items-table td:first-child { border-inline-start: 0; }
+table.data.items-table td:last-child { border-inline-end: 0; }
+
+table.data.items-table tbody tr:nth-child(even) td { background: #f6f9fe; }
+table.data.items-table tbody tr:hover td { background: #e8f1ff; }
+table.data.items-table tbody tr.sel td { background: #dbeafe; }
+
+table.data.items-table td.cell-name { text-align: center; font-weight: 700; }
+
+table.data.items-table .empty-row {
+  text-align: center;
+  color: #64748b;
+  font-weight: 700;
+  padding: 22px 8px;
+}
+
+/* ================= معاينة: البحث + البند + إضافة الصنف + جديد فى مربع غامق ================= */
+.group-grid { padding: 4px 12px 12px; }
+
+/* اسم الصنف + الحد الأدنى على نفس السطر دائمًا */
+.fl-pair {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .dark-bar { margin: 8px 8px 6px; padding: 8px 10px; border-radius: 14px; }
+  .items-table-wrap { margin: 0 8px 10px; }
+  .fl-pair { flex-wrap: wrap; }
+}
+
+/* ================= توسيط الكلام في كل الشاشات والخانات ================= */
+.win-input,
+.field input,
+.field select,
+.form-row .win-input,
+.form-grid .win-input,
+.fl .win-input,
+.qty-input,
+textarea.win-input {
+  text-align: center;
+}
+
+.form-row,
+.form-grid,
+.toolbar {
+  justify-content: center;
+}
+
+.fl > span,
+.field > span,
+.form-grid label {
+  text-align: center;
+}
+
+.subtabs-wrap .subtabs {
+  flex-wrap: wrap;
+  justify-content: center;
+  overflow: visible;
+}
+
+table.data td.cell-name { text-align: center; }
