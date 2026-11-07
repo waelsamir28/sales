@@ -113,11 +113,11 @@ export function buildInvoiceHtml(data: InvoicePrintData) {
   .store h1 { margin: 0; font-size: 24px; color: ${accent}; }
   .store p { margin: 3px 0; font-size: 12px; color: #475569; }
   .stamp { text-align: left; }
-  .stamp .badge { display: inline-block; background: ${accent}; color: #fff; padding: 6px 16px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+  .stamp .badge { display: inline-block; background: ${accent}; color: #fff; padding: 6px 16px; border-radius: 0; font-weight: 800; font-size: 13px; border: 1px solid #0f172a; }
   .stamp .num { margin-top: 8px; font-size: 12px; color: #334155; }
   .meta { display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 12px 0; font-size: 12.5px; }
   .meta span b { color: ${accent}; }
-  .party { display: flex; flex-wrap: wrap; gap: 10px 22px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; }
+  .party { display: flex; flex-wrap: wrap; gap: 10px 22px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0; padding: 10px 12px; font-size: 12.5px; }
   table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 12px; }
   thead th { background: #eef2f9; color: ${accent}; padding: 8px 6px; border-bottom: 2px solid #c5d4ea; font-weight: 800; }
   tbody td { padding: 6px; border-bottom: 1px solid #eef2f7; text-align: center; }
@@ -126,12 +126,12 @@ export function buildInvoiceHtml(data: InvoicePrintData) {
   td.strong { font-weight: 800; }
   tbody tr:nth-child(even) { background: #f8fafc; }
   .summary { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
-  .sm-item { flex: 1 1 140px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; background: #f8fafc; display: flex; justify-content: space-between; gap: 8px; }
+  .sm-item { flex: 1 1 140px; border: 1px solid #e2e8f0; border-radius: 0; padding: 8px 10px; font-size: 12.5px; background: #f8fafc; display: flex; justify-content: space-between; gap: 8px; }
   .sm-item b { color: ${accent}; }
-  .net { margin-top: 12px; background: #1f2937; color: #fff; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
+  .net { margin-top: 12px; background: #1f2937; color: #fff; border-radius: 0; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
   .net b { color: #fde68a; font-size: 22px; }
   .notes { margin-top: 12px; font-size: 12px; color: #475569; }
-  .foot { margin-top: 18px; border-top: 1px dashed #cbd5e1; padding-top: 10px; font-size: 11.5px; color: #64748b; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .foot { margin-top: 18px; border-top: 1px solid #cbd5e1; padding-top: 10px; font-size: 11.5px; color: #64748b; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   @media print { body { padding: 8px; } }
 </style>
 </head>
@@ -158,8 +158,6 @@ export function buildInvoiceHtml(data: InvoicePrintData) {
   </div>
 
   <div class="meta">
-    <span>المخزن: <b>${esc(data.warehouseName || "—")}</b></span>
-    <span>الخزينة: <b>${esc(data.treasuryName || "—")}</b></span>
     ${showType ? `<span>نوع الدفع: <b>${esc(data.paymentType)}</b></span>` : ""}
     <span>عدد الأصناف: <b>${data.itemCount}</b></span>
     <span>إجمالي الكميات: <b>${data.qtyTotal}</b></span>
@@ -168,8 +166,6 @@ export function buildInvoiceHtml(data: InvoicePrintData) {
   <div class="party">
     <span>${esc(data.partyLabel)}: <b>${esc(data.partyName)}</b></span>
     ${data.partyPhone ? `<span>الهاتف: ${esc(data.partyPhone)}</span>` : ""}
-    ${data.previousBalance != null ? `<span>ديون سابقة: <b>${money(data.previousBalance, currency)}</b></span>` : ""}
-    ${data.balanceAfter != null ? `<span>بعد الفاتورة: <b>${money(data.balanceAfter, currency)}</b></span>` : ""}
   </div>
 
   ${
@@ -185,7 +181,15 @@ export function buildInvoiceHtml(data: InvoicePrintData) {
       : ""
   }
 
-  <div class="summary">${summary}</div>
+  <div class="summary">${summary}${
+    data.previousBalance != null
+      ? `<div class="sm-item"><span>ديون سابقة</span><b>${money(data.previousBalance, currency)}</b></div>`
+      : ""
+  }${
+    data.balanceAfter != null
+      ? `<div class="sm-item"><span>بعد الحفظ</span><b>${money(data.balanceAfter, currency)}</b></div>`
+      : ""
+  }</div>
   <div class="net"><span>المبلغ الصافي</span><b>${money(data.total, currency)}</b></div>
   ${data.notes ? `<div class="notes">ملاحظات: ${esc(data.notes)}</div>` : ""}
   <div class="foot">

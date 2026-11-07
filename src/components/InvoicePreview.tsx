@@ -130,11 +130,6 @@ export default function InvoicePreview({
                 {data.partyLabel}: <b>{data.partyName}</b>
               </span>
               {data.partyPhone ? <span>الهاتف: {data.partyPhone}</span> : null}
-              {data.previousBalance != null ? (
-                <span>
-                  ديون سابقة: <b>{money(data.previousBalance, currency)}</b>
-                </span>
-              ) : null}
             </div>
 
             <div className="pv-table-wrap">
@@ -173,6 +168,12 @@ export default function InvoicePreview({
             </div>
 
             <div className="pv-summary">
+              {data.previousBalance != null ? (
+                <div className="pv-debt">
+                  <span>ديون سابقة</span>
+                  <b>{money(data.previousBalance, currency)}</b>
+                </div>
+              ) : null}
               <div>
                 <span>الإجمالي</span>
                 <b>{money(data.subtotal, currency)}</b>
@@ -191,6 +192,12 @@ export default function InvoicePreview({
                 <span>الباقي</span>
                 <b>{money(data.remaining, currency)}</b>
               </div>
+              {data.balanceAfter != null ? (
+                <div className="pv-after">
+                  <span>بعد الحفظ</span>
+                  <b>{money(data.balanceAfter, currency)}</b>
+                </div>
+              ) : null}
             </div>
 
             <div className="pv-net">

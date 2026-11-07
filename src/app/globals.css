@@ -2606,3 +2606,117 @@ table.data td.cell-name { text-align: center; }
   .tile { width: 140px; height: 104px; }
   .tile-wrap { gap: 14px; }
 }
+
+/* ================= الفاتورة: شكل مسطّر ونظيف + الديون جنب الإجمالى ================= */
+.pv-party {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 0;
+  color: #1e293b;
+}
+
+.pv-table-wrap {
+  border: 1px solid #cbd5e1;
+  border-radius: 0;
+}
+
+.pv-table th,
+.pv-table td {
+  border: 1px solid #dbe3ee;
+  border-radius: 0;
+}
+
+.pv-summary > div {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0;
+}
+
+.pv-summary > .pv-debt {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.pv-summary > .pv-debt b { color: #b91c1c; }
+
+.pv-summary > .pv-after {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.pv-net {
+  border-radius: 0;
+  border: 1px solid #0f172a;
+}
+
+/* سطر الإجمالى فى شاشة الفاتورة: ديون سابقة + الإجمالى + المدفوع + الباقى + الصافى */
+.pay-line {
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.pay-line .debt-field {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0;
+  padding: 6px 12px;
+}
+
+.pay-line .debt-field .money.debt { color: #b91c1c; font-size: 17px; }
+
+.pay-line .after-field {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0;
+  padding: 6px 12px;
+}
+
+.pay-line .after-field .money.after { color: #1d4ed8; font-size: 17px; }
+
+.total-badge,
+.net-box,
+.mini-stat,
+.box {
+  border-radius: 0;
+}
+
+/* شاشة الفاتورة كلها مسطّرة (زوايا قائمة) */
+.pos-title,
+.pos-top,
+.pos-mid,
+.pos-bottom,
+.pos-table,
+.pad,
+.pad-btn,
+.fk,
+.qty-input,
+.pos .win-input,
+.pos .btn,
+.pos .field,
+.modal-card,
+.floating-card {
+  border-radius: 0 !important;
+}
+
+.pos .fk { border-radius: 0 !important; }
+
+/* حدود أوضح للجدول المسطّر */
+.pos-table th,
+.pos-table td {
+  border: 1px solid #d7dfea;
+}
+
+/* ================= جداول مسطّرة فى كل الشاشات (خطوط فاصلة بين كل خلية) ================= */
+table.data th,
+table.data td {
+  border-inline: 1px solid #e2e8f0;
+}
+
+table.data th:first-child,
+table.data td:first-child { border-inline-start: 0; }
+
+table.data th:last-child,
+table.data td:last-child { border-inline-end: 0; }
+
+table.data th { border-bottom: 1px solid #c5d0e2; }
+table.data td { border-bottom: 1px solid #e8eef6; }

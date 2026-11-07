@@ -50,7 +50,7 @@ export function ItemsScreen({
   subTab?: string;
   onSubTab?: (id: string) => void;
 }) {
-  const emptyGroup = { name: "", color: "#2563eb" };
+  const emptyGroup = { name: "", color: "#1d4ed8" };
   const emptyQuick = {
     name: "",
     categoryId: data.categories[0]?.id ?? 1,

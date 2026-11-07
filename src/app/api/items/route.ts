@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         .insert(categories)
         .values({
           name,
-          color: String(body.color ?? "#3b82f6"),
+          color: String(body.color ?? "#2563eb"),
           sortOrder: n(body.sortOrder, existing.length + 1),
         })
         .returning();
@@ -143,7 +143,7 @@ export async function PATCH(request: Request) {
         .insert(categories)
         .values({
           name: String(body.name ?? "بند جديد"),
-          color: String(body.color ?? "#3b82f6"),
+          color: String(body.color ?? "#2563eb"),
           sortOrder: n(body.sortOrder, 99),
         })
         .returning();
