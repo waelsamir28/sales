@@ -295,6 +295,8 @@ export default function InvoicePos({
   const dateStr = now
     .toLocaleString("en-GB", { hour12: false })
     .replace(",", "");
+  const dateOnly = now.toLocaleDateString("en-GB");
+  const timeOnly = now.toLocaleTimeString("en-GB", { hour12: false });
 
   function openCustomerForm() {
     setNewCustomer({ name: "", phone: "", address: "", code: "" });
@@ -377,8 +379,8 @@ export default function InvoicePos({
     <>
       <div className="pos">
         <div className="pos-title">
-          <span>بيانات الفاتورة</span>
-          <span className="badge-sale">🛒 {meta.badge}</span>
+          <span className="pos-title-text">{meta.badge}</span>
+          <span className="badge-sale">🛒 فاتورة سريعة</span>
           <div className="num-preview">
             <div className="field">
               <span>رقم الفاتورة</span>
@@ -419,9 +421,15 @@ export default function InvoicePos({
               </button>
             </div>
 
-            <div className="field">
-              <span>التاريخ</span>
-              <input className="win-input inp-date" value={dateStr} readOnly />
+            <div className="datetime-stack">
+              <div className="mini-field">
+                <span>التاريخ</span>
+                <input className="win-input inp-dt" value={dateOnly} readOnly />
+              </div>
+              <div className="mini-field">
+                <span>الساعة</span>
+                <input className="win-input inp-dt" value={timeOnly} readOnly />
+              </div>
             </div>
 
             <div className="type-stack">
@@ -514,7 +522,7 @@ export default function InvoicePos({
                 <button
                   key={c.id}
                   type="button"
-                  className={`cat-btn cat-color-${(((c.sortOrder - 1) % 6) + 6) % 6} ${catId === c.id ? "on" : ""}`}
+                  className={`cat-btn cat-outline-${(((c.sortOrder - 1) % 6) + 6) % 6} ${catId === c.id ? "on" : ""}`}
                   onClick={() => {
                     setCatId(c.id);
                     playPick("add");
@@ -614,7 +622,7 @@ export default function InvoicePos({
               <button
                 key={it.id}
                 type="button"
-                className={`pad-btn pad-color-${((cats.find((c) => c.id === it.categoryId)?.sortOrder ?? 1) - 1) % 6}`}
+                className={`pad-btn cat-outline-${((cats.find((c) => c.id === it.categoryId)?.sortOrder ?? 1) - 1) % 6}`}
                 onClick={() => addItem(it)}
               >
                 {it.name}

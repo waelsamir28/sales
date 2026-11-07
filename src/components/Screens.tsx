@@ -227,8 +227,8 @@ export function ItemsScreen({
           </div>
           <div className="group-grid">
             {data.categories.map((c) => (
-              <div className="group-card" key={c.id}>
-                <span className="group-dot" style={{ background: c.color }} />
+              <div className="group-card" key={c.id} style={{ borderColor: c.color }}>
+                <span className="group-dot" style={{ borderColor: c.color }} />
                 <div className="group-meta">
                   <b>{c.name}</b>
                   <span className="muted">{catCount(c.id)} صنف</span>
@@ -496,7 +496,13 @@ export function ItemsScreen({
                     <td>{i.code}</td>
                     <td className="cell-name">{i.name}</td>
                     <td className="cell-name">
-                      <span className="group-pill" style={{ borderColor: data.categories.find((c) => c.id === i.categoryId)?.color }}>
+                      <span
+                        className="group-pill"
+                        style={{
+                          borderColor: data.categories.find((c) => c.id === i.categoryId)?.color,
+                          color: data.categories.find((c) => c.id === i.categoryId)?.color,
+                        }}
+                      >
                         {catName(i.categoryId)}
                       </span>
                     </td>
